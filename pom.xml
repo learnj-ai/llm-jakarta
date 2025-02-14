@@ -14,12 +14,12 @@
     </description>
 
     <modules>
-        <module>step-00</module>
-        <module>step-01</module>
-        <module>step-02</module>
-        <module>step-03</module>
-        <module>step-04</module>
-        <module>step-05</module>
-        <module>step-06</module>
+        <module>step-00-chatbot-first-step</module>
+        <module>step-01-prompts</module>
+        <module>step-02-chat-memory</module>
+        <module>step-03-tools</module>
+        <module>step-04-inmemory-rag</module>
+        <module>step-05-easy-rag</module>
+        <module>step-06-advanced-rag</module>
     </modules>
 </project>
