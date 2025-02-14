@@ -13,6 +13,7 @@ This Jakarta EE AI Chatbot is designed to help users learn about Jakarta EE tech
 ## Prerequisites
 
 1. **OpenAI API Key**: You need a valid OpenAI API key to run this chatbot. Save your API key in an environment variable named `OPENAI_API_KEY`.
+2. **$LLM_JAKARTA_DOCUMENTS_DIR**: Set this to a pdf documents dir for all documents to be loaded for RAG in step-04, 05 and 06
 
 ---
 
