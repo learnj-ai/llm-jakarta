@@ -6,7 +6,15 @@ let markdownBuffer = ""; // Buffer to hold Markdown fragments during streaming
 marked.use({
     pedantic: false,
     gfm: true,
-    breaks: false
+    breaks: false,
+    highlight: function(code, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+            try {
+                return hljs.highlight(code, { language: lang }).value;
+            } catch (err) {}
+        }
+        return code;
+    }
 });
 
 function getUserId() {
@@ -31,10 +39,19 @@ function connect() {
 
         socket.onmessage = function (event) {
             const data = event.data;
+            const loadingIndicator = document.getElementById("loading-indicator");
 
             if (data === "[END]") {
                 finalizeStreamingMessage();
-                hideTypingIndicator();
+                loadingIndicator.style.display = "none";
+
+                // Highlight any code blocks in the message
+                if (currentStreamingMessage) {
+                    const codeBlocks = currentStreamingMessage.querySelectorAll('pre code');
+                    codeBlocks.forEach(block => {
+                        hljs.highlightElement(block);
+                    });
+                }
             } else {
                 if (!currentStreamingMessage) {
                     createNewBotBubble();
@@ -67,17 +84,32 @@ function connect() {
 function sendMessage() {
     const input = document.getElementById("message-input");
     const message = input.value.trim();
+    const sendButton = document.querySelector('.chat-send-button');
 
     if (message) {
+        // Disable input and button while sending
+        input.disabled = true;
+        sendButton.disabled = true;
+        sendButton.style.opacity = '0.7';
+
         addMessage(message, "user");
         if (socket.readyState === WebSocket.OPEN) {
-            showTypingIndicator();
+            const loadingIndicator = document.getElementById("loading-indicator");
+            loadingIndicator.style.display = "flex";
             socket.send(message);
         } else {
             console.error("Failed to send message: WebSocket is not open");
             showErrorBubble("Failed to send message. Please try again.");
         }
         input.value = "";
+
+        // Re-enable input and button
+        setTimeout(() => {
+            input.disabled = false;
+            sendButton.disabled = false;
+            sendButton.style.opacity = '1';
+            input.focus();
+        }, 500);
     }
 }
 
@@ -87,7 +119,8 @@ function createNewBotBubble() {
     currentStreamingMessage.classList.add("message-bubble", "bot");
     chatWindow.appendChild(currentStreamingMessage);
 
-    chatWindow.scrollTop = chatWindow.scrollHeight;
+    // Smooth scroll to the new message
+    currentStreamingMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
 
 function appendToStreamingBuffer(textFragment) {
@@ -117,7 +150,19 @@ function addMessage(text, type) {
         messageElement.textContent = text;
     }
     chatWindow.appendChild(messageElement);
-    chatWindow.scrollTop = chatWindow.scrollHeight;
+
+    // Smooth scroll to the new message with a slight delay to ensure proper rendering
+    setTimeout(() => {
+        messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 50);
+
+    // Highlight any code blocks in bot messages
+    if (type === "bot") {
+        const codeBlocks = messageElement.querySelectorAll('pre code');
+        codeBlocks.forEach(block => {
+            hljs.highlightElement(block);
+        });
+    }
 }
 
 function showTypingIndicator() {
