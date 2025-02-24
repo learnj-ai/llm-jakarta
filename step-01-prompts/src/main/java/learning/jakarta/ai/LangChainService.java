@@ -8,6 +8,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import learning.jakarta.ai.prompts.*;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,7 +19,9 @@ import java.util.function.Consumer;
 @NoArgsConstructor
 public class LangChainService {
 
+    @Getter
     private Personality personality = null;
+    private OpenAiStreamingChatModel chatModel;
 
     @Inject
     LangChain4JConfig config;
@@ -26,7 +29,7 @@ public class LangChainService {
     @Inject
     @PostConstruct
     public void init() {
-        OpenAiStreamingChatModel chatModel = OpenAiStreamingChatModel.builder()
+        chatModel = OpenAiStreamingChatModel.builder()
                 .apiKey(config.getApiKey())
                 .modelName(config.getModelName())
                 .temperature(config.getTemperature())
@@ -37,8 +40,12 @@ public class LangChainService {
                 .logResponses(config.isLogResponses())
                 .build();
 
-        log.info("Personality type: {}", config.getPersonalityType());
-        personality = switch (config.getPersonalityType()) {
+        switchPersonality(config.getPersonalityType());
+    }
+
+    public void switchPersonality(PersonalityType personalityType) {
+        log.info("Switching to personality type: {}", personalityType);
+        personality = switch (personalityType) {
             case JAVA_CHAMPION -> createPersonality(JavaChampion.class, chatModel);
             case POET -> createPersonality(Poet.class, chatModel);
             case CHAIN_OF_THOUGHT -> createPersonality(ChainOfThought.class, chatModel);

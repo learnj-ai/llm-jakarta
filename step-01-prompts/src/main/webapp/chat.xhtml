@@ -3,19 +3,63 @@
       xmlns:h="http://xmlns.jcp.org/jsf/html">
 <h:head>
     <title>Welcome to Jakarta EE Chatbot</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&amp;display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="#{request.contextPath}/resources/css/chat.css"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&amp;family=Fira+Code:wght@400;500&amp;display=swap"
+          rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="#{request.contextPath}/resources/css/chat-enhanced.css"/>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/xml.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/tokyo-night-dark.min.css"
+          rel="stylesheet"/>
     <script src="#{request.contextPath}/resources/js/chat.js"></script>
     <script>
         function toggleChat() {
             const chatContainer = document.getElementById("chat-container");
-            chatContainer.style.display = chatContainer.style.display === "none" ? "flex" : "none";
+            const chatIcon = document.querySelector('.chat-icon');
+            const isOpening = chatContainer.style.display === "none";
 
-            if (chatContainer.style.display === "flex" &amp;&amp; (!socket || socket.readyState !== WebSocket.OPEN)) {
-                connect();
+            if (isOpening) {
+                // Hide chat icon
+                chatIcon.style.display = "none";
+
+                // Show and animate container
+                chatContainer.style.display = "flex";
+                chatContainer.classList.add("animating");
+
+                // Remove animation class after animation completes
+                setTimeout(() => {
+                    chatContainer.classList.remove("animating");
+                }, 300);
+
+                // Connect if needed
+                if (!socket || socket.readyState !== WebSocket.OPEN) {
+                    connect();
+                }
+
+                // Focus input
+                setTimeout(() => {
+                    document.getElementById('message-input').focus();
+                }, 300);
+            } else {
+                // Start closing animation
+                chatContainer.classList.add("closing");
+
+                // Hide after animation
+                setTimeout(() => {
+                    chatContainer.style.display = "none";
+                    chatContainer.classList.remove("closing");
+                }, 300);
+
+                // Show chat icon with delay for smooth transition
+                setTimeout(() => {
+                    chatIcon.style.display = "flex";
+                    chatIcon.style.animation = "fadeIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)";
+                    setTimeout(() => chatIcon.style.animation = "", 200);
+                }, 200);
             }
         }
 
@@ -23,15 +67,112 @@
             const messageInput = document.getElementById("message-input");
             messageInput.addEventListener("keypress", function (event) {
                 if (event.key === "Enter") {
-                    sendMessage(); // Send message when "Enter" is pressed
-                    event.preventDefault(); // Prevent default form submission
+                    sendMessage();
+                    event.preventDefault();
                 }
             });
+
+            // Set default personality
+            const personalitySelect = document.getElementById("personality-select");
+            personalitySelect.value = "JAVA_CHAMPION";
+
+            // Animate chat icon on load
+            const chatIcon = document.querySelector('.chat-icon');
+            chatIcon.style.opacity = '0';
+            chatIcon.style.transform = 'scale(0.8) translateY(10px)';
+
+            setTimeout(() => {
+                chatIcon.style.opacity = '1';
+                chatIcon.style.transform = 'scale(1) translateY(0)';
+            }, 500);
         };
 
         function toggleFullScreen() {
             const chatContainer = document.getElementById("chat-container");
+            const chatIcon = document.querySelector('.chat-icon');
+            const fullscreenButton = document.querySelector('.chat-fullscreen');
+
+            // Add transition class
+            chatContainer.classList.add('transitioning');
+
+            // Toggle fullscreen
             chatContainer.classList.toggle("fullscreen");
+
+            if (chatContainer.classList.contains("fullscreen")) {
+                chatIcon.style.display = 'none';
+                fullscreenButton.title = "Exit fullscreen";
+
+                // Focus input when going fullscreen
+                setTimeout(() => {
+                    document.getElementById('message-input').focus();
+                }, 300);
+            } else {
+                chatIcon.style.display = 'flex';
+                fullscreenButton.title = "Enter fullscreen";
+            }
+
+            // Handle layout changes
+            setTimeout(() => {
+                chatContainer.classList.remove('transitioning');
+                const chatWindow = document.getElementById('chat-window');
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }, 300);
+        }
+
+        function switchPersonality(personality) {
+            if (socket &amp;&amp; socket.readyState === WebSocket.OPEN) {
+                const loadingIndicator = document.getElementById("loading-indicator");
+                loadingIndicator.style.display = "flex";
+
+                // Send personality switch command
+                socket.send(JSON.stringify({
+                    type: "SWITCH_PERSONALITY",
+                    personality: personality
+                }));
+
+                // Show switching message
+                const personalityName = personality.toLowerCase().replace(/_/g, " ");
+                addMessage("Switching to " + personalityName + " mode...", "bot");
+
+                // Hide loading after a short delay
+                setTimeout(() => {
+                    loadingIndicator.style.display = "none";
+                }, 500);
+            } else {
+                showErrorBubble("Cannot switch personality: connection lost. Please refresh the page.");
+            }
+        }
+
+        function toggleSystemPrompt() {
+            const systemPrompt = document.getElementById("system-prompt");
+            const isVisible = systemPrompt.style.display === "block";
+
+            if (!isVisible) {
+                const personality = document.getElementById("personality-select").value;
+                const personalityName = personality.toLowerCase().replace(/_/g, " ");
+                const promptText = document.getElementById("system-prompt-text");
+
+                // Show loading state
+                promptText.textContent = "Loading system prompt...";
+                systemPrompt.style.display = "block";
+
+                // Fetch actual system prompt
+                const contextPath = getApplicationContext();
+                const fullPath = contextPath + "/rest-api/system-prompt";
+                fetch(fullPath)
+                    .then(response => response.json())
+                    .then(prompt => {
+                        const { name, systemMessage } = prompt;
+                        document.getElementById("current-mode").textContent = name;
+                        document.getElementById("system-prompt-text").innerHTML =  marked.parse(systemMessage);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching system prompt:', error);
+                        promptText.innerHTML = marked.parse(`### Error\n\nFailed to load system prompt: ${error.message}`);
+                    });
+            } else {
+                systemPrompt.style.display = "none";
+            }
         }
     </script>
 </h:head>
@@ -49,26 +190,72 @@
     <!-- Chat Container -->
     <div id="chat-container" class="chat-container" style="display: none;">
         <div class="chat-header">
-            <img src="#{request.contextPath}/resources/images/jakartaee_logo.jpg" alt="Jakarta EE Logo"
-                 class="jakarta-logo"/>
-            <h1 class="chat-title">AI Chatbot</h1>
-            <button class="chat-minimize" onclick="toggleChat()">−</button>
-            <button class="chat-fullscreen" onclick="toggleFullScreen()">⤢</button>
+            <div class="header-left">
+                <img src="#{request.contextPath}/resources/images/jakartaee_logo.jpg" alt="Jakarta EE Logo"
+                     class="jakarta-logo"/>
+                <div class="chat-header-content">
+                    <h1 class="chat-title">Jakarta EE Assistant</h1>
+                    <div class="personality-selector">
+                        <select id="personality-select" onchange="switchPersonality(this.value)"
+                                title="Select AI personality">
+                            <option value="JAVA_CHAMPION">Java Champion</option>
+                            <option value="POET">Code Poet</option>
+                            <option value="CHAIN_OF_THOUGHT">Chain of Thought</option>
+                            <option value="MOVIE_SUMMARIZER">Movie Summarizer</option>
+                            <option value="TREE_OF_THOUGHT">Tree of Thought</option>
+                        </select>
+                        <button class="show-prompt-button" onclick="toggleSystemPrompt()" title="Show system prompt">
+                            <i class="fas fa-info-circle"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-controls">
+                <button class="chat-minimize" onclick="toggleChat()" title="Minimize chat">
+                    <i class="fas fa-window-minimize"></i>
+                </button>
+                <button class="chat-fullscreen" onclick="toggleFullScreen()" title="Toggle fullscreen">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
         </div>
+
+        <div id="system-prompt" class="system-prompt">
+            <div class="system-prompt-content">
+                <button onclick="toggleSystemPrompt()" class="close-prompt-button">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h3>System Prompt</h3>
+                <label><strong>Current Mode:</strong> <span id="current-mode"></span></label><br/>
+                <p id="system-prompt-text"></p>
+            </div>
+        </div>
+
         <div id="error-bubble" class="error-bubble" style="display: none;">
             Unable to connect to the chatbot. Please try again later.
         </div>
 
         <div id="chat-window" class="chat-window"></div>
+        <div id="loading-indicator" class="loading-indicator" style="display: none;">
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
         <div class="chat-input-container">
-            <input id="message-input" class="chat-input" type="text" placeholder="Type your message here..."/>
-            <button class="chat-send-button" onclick="sendMessage()">Send</button>
+            <input id="message-input" class="chat-input" type="text"
+                   placeholder="Type your message here... (Press Enter to send)"
+                   aria-label="Chat message input"/>
+            <button class="chat-send-button" onclick="sendMessage()" title="Send message">
+                <i class="fas fa-paper-plane"></i>
+            </button>
         </div>
     </div>
-
     <!-- Chatbot Icon -->
-    <button class="chat-icon" onclick="toggleChat()">
-        💬
+    <button class="chat-icon" onclick="toggleChat()" title="Chat with AI Assistant">
+        <i class="fas fa-robot"></i>
+        <span class="notification-dot"></span>
     </button>
 </h:body>
 </html>

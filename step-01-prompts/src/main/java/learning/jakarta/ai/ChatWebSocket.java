@@ -1,8 +1,10 @@
 package learning.jakarta.ai;
 
 import jakarta.inject.Inject;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.websocket.*;
 import jakarta.websocket.server.ServerEndpoint;
+import learning.jakarta.ai.model.Message;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -19,6 +21,8 @@ public class ChatWebSocket {
 
     @Inject
     private LangChainService langChainService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @OnOpen
     public void onOpen(Session session) {
@@ -41,19 +45,44 @@ public class ChatWebSocket {
         activeSessions.put(userId, session);
 
         if (langChainService.getPersonalitySystemPrompt() != null) {
-            onMessage("Hey there! How can I help you today?", session);
+            try {
+                Message initialMessage = new Message();
+                initialMessage.setType(Message.MessageType.TEXT);
+                initialMessage.setContent("Hey there! How can I help you today?");
+                onMessage(objectMapper.writeValueAsString(initialMessage), session);
+            } catch (IOException e) {
+                log.error("Error sending initial message", e);
+                closeSession(session, "Error initializing chat");
+            }
         }
     }
 
     @OnMessage
-    public void onMessage(String message, Session session) {
-        langChainService.sendMessage(message, next -> {
-            try {
-                session.getBasicRemote().sendText(next);
-            } catch (IOException e) {
-                log.error("Error occurred", e);
+    public void onMessage(String messageStr, Session session) {
+        try {
+            Message message = objectMapper.readValue(messageStr, Message.class);
+
+            switch (message.getType()) {
+                case TEXT -> langChainService.sendMessage(message.getContent(), next -> {
+                    try {
+                        session.getBasicRemote().sendText(next);
+                    } catch (IOException e) {
+                        log.error("Error sending message", e);
+                    }
+                });
+                case SWITCH_PERSONALITY -> {
+                    langChainService.switchPersonality(message.getPersonality());
+                    session.getBasicRemote().sendText("Switched to " + message.getPersonality() + " personality");
+                }
             }
-        });
+        } catch (IOException e) {
+            log.error("Error processing message", e);
+            try {
+                session.getBasicRemote().sendText("Error processing message: " + e.getMessage());
+            } catch (IOException ex) {
+                log.error("Error sending error message", ex);
+            }
+        }
     }
 
     @OnClose
