@@ -35,6 +35,15 @@ public class ChatWebSocket {
         }
 
         activeSessions.put(userId, session);
+
+        langChainService.sendMessage("Hey there! How can I help you today?", next -> {
+            try {
+                session.getBasicRemote().sendText(next);
+                session.getBasicRemote().sendText("[END]");
+            } catch (IOException e) {
+                log.error("Error occurred", e);
+            }
+        });
     }
 
     @OnMessage

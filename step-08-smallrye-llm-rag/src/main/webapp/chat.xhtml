@@ -25,22 +25,6 @@
                 if (!socket || socket.readyState !== WebSocket.OPEN) {
                     connect();
                 }
-
-                // Show welcome message if chat window is empty
-                const chatWindow = document.getElementById("chat-window");
-                if (chatWindow.children.length === 0) {
-                    const welcomeMessage = `Hi there! 👋 I'm your Jakarta EE AI assistant. I can help you with:
-* Learning about Jakarta EE technologies
-* Understanding best practices
-* Solving common problems
-* Finding relevant documentation
-
-Feel free to ask any questions!`;
-
-                    setTimeout(() => {
-                        addMessage(welcomeMessage, "bot");
-                    }, 500);
-                }
             }
         }
 
@@ -85,16 +69,6 @@ Feel free to ask any questions!`;
     </script>
 </h:head>
 <h:body>
-    <!-- Main Page Welcome Message -->
-    <div class="main-page-content">
-        <img src="#{request.contextPath}/resources/images/jakartaee_logo.jpg" alt="Jakarta EE Logo"/>
-        <h1>Welcome to Jakarta EE AI Chatbot</h1>
-        <p>
-            This chatbot is here to help you learn about Jakarta EE technologies, answer your questions,
-            and provide guidance on how to get started. Feel free to click the chatbot icon at the bottom
-            of the page to start a conversation!
-        </p>
-    </div>
     <!-- Chat Container -->
     <div id="chat-container" class="chat-container" style="display: none;">
         <div class="chat-header">

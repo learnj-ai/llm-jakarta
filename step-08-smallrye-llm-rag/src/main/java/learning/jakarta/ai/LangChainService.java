@@ -2,7 +2,7 @@ package learning.jakarta.ai;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import learning.jakarta.ai.booking.ChatAiService;
+import learning.jakarta.ai.bookstore.BookStoreChatService;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 public class LangChainService {
 
     @Inject
-    private ChatAiService chatAiService;
+    private BookStoreChatService chatAiService;
 
     public void sendMessage(String message, Consumer<String> consumer) {
         log.info("User message: {}", message);

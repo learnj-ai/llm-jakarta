@@ -1,0 +1,85 @@
+Jakarta Book Store - Available Books
+
+Programming Books
+----------------
+
+1. Effective Java (3rd Edition)
+ISBN: 978-0134685991
+Author: Joshua Bloch
+Price: $49.99
+Category: Programming
+Description: The definitive guide to best practices for the Java platform. Each chapter consists of several "items," each presented in the form of a short, standalone essay that provides specific advice, insight into Java platform subtleties, and updated code examples. The comprehensive descriptions and explanations for each item illuminate what to do, what not to do, and why.
+Recommended for: Intermediate to advanced Java developers
+Key topics: Collections, Generics, Lambdas, Streams, Concurrency
+
+2. Head First Design Patterns
+ISBN: 978-0596009205
+Author: Eric Freeman, Elisabeth Robson
+Price: $44.99
+Category: Programming
+Description: A complete guide to design patterns using a unique method of teaching that focuses on brain-friendly learning techniques. This book helps you learn design patterns and best practices in a way that sticks, using humor, visuals, and real-world examples.
+Recommended for: Beginning to intermediate developers
+Key topics: Object-oriented design, Design patterns, Java programming
+
+3. Clean Code
+ISBN: 978-0132350884
+Author: Robert C. Martin
+Price: $47.99
+Category: Programming
+Description: A handbook of agile software craftsmanship that helps developers write better code. This book is divided into three parts: The first describes the principles, patterns, and practices of writing clean code. The second consists of several case studies of increasing complexity. The third contains a list of heuristics gathered while creating the case studies.
+Recommended for: All software developers
+Key topics: Code quality, Refactoring, Testing
+
+Software Architecture Books
+-------------------------
+
+4. Clean Architecture
+ISBN: 978-0134494166
+Author: Robert C. Martin
+Price: $44.99
+Category: Software Architecture
+Description: A comprehensive guide to software architecture that introduces the universal rules of software architecture that apply to every software system. The book provides the essential details needed to understand how to produce software systems that can evolve and maintain over time.
+Recommended for: Software architects and senior developers
+Key topics: SOLID principles, Component design, System architecture
+
+5. Building Microservices
+ISBN: 978-1491950357
+Author: Sam Newman
+Price: $54.99
+Category: Software Architecture
+Description: This practical guide helps you understand, design, and implement microservices architectures. It covers all aspects of distributed systems, showing how to build and manage services that are scalable, resilient, and maintainable.
+Recommended for: System architects and developers
+Key topics: Microservices, Distributed systems, Service integration
+
+Web Development Books
+-------------------
+
+6. Modern Full-Stack Development
+ISBN: 978-1484257371
+Author: Frank Zammetti
+Price: $39.99
+Category: Web Development
+Description: A comprehensive guide to building modern web applications using React, Node.js, and modern JavaScript tools. This book covers everything from setup to deployment, including testing and security best practices.
+Recommended for: Web developers
+Key topics: React, Node.js, Full-stack development
+
+Popular Recommendations
+----------------------
+- For Java Developers: Effective Java, Clean Code
+- For Beginners: Head First Design Patterns
+- For Architects: Clean Architecture, Building Microservices
+- For Web Developers: Modern Full-Stack Development
+
+Reading Path Suggestions
+-----------------------
+1. Beginning Programming:
+   - Head First Design Patterns
+   - Clean Code
+
+2. Advanced Development:
+   - Effective Java
+   - Building Microservices
+
+3. Architecture Focus:
+   - Clean Architecture
+   - Modern Full-Stack Development

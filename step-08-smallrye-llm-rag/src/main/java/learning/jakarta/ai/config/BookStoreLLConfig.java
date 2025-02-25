@@ -1,4 +1,4 @@
-package learning.jakarta.ai.booking;
+package learning.jakarta.ai.config;
 
 import io.smallrye.llm.core.langchain4j.core.config.spi.LLMConfig;
 
@@ -9,7 +9,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class DummyLLConfig implements LLMConfig {
+public class BookStoreLLConfig implements LLMConfig {
     Properties properties = new Properties();
 
     @Override

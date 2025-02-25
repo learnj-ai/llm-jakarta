@@ -3,7 +3,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd">
     <welcome-file-list>
-        <welcome-file>chat.xhtml</welcome-file>
+        <welcome-file>books.xhtml</welcome-file>
     </welcome-file-list>
 
     <servlet>

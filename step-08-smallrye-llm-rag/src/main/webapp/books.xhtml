@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+<h:head>
+    <title>Book Store - Jakarta EE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&amp;family=Fira+Code:wght@400;500&amp;display=swap" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    
+    <link rel="stylesheet" href="#{request.contextPath}/resources/css/chat-enhanced.css"/>
+    <link rel="stylesheet" href="#{request.contextPath}/resources/css/bookstore.css"/>
+    <script src="#{request.contextPath}/resources/js/chat.js"></script>
+</h:head>
+<h:body>
+    <div class="bookstore-container">
+        <header class="store-header">
+            <div class="logo">
+                <img src="#{request.contextPath}/resources/images/jakartaee_logo.jpg" alt="Jakarta EE Logo"/>
+                <h1>Jakarta Book Store</h1>
+            </div>
+            <div class="search-bar">
+                <h:form>
+                    <h:inputText value="#{bookStoreBean.searchQuery}" 
+                               placeholder="Search books..."
+                               styleClass="search-input"/>
+                    <h:commandButton value="Search" 
+                                   action="#{bookStoreBean.searchBooks}"
+                                   styleClass="search-button">
+                        <f:ajax execute="@form" render="bookList"/>
+                    </h:commandButton>
+                </h:form>
+            </div>
+            <div class="cart-info">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count">#{bookStoreBean.cartItemCount}</span>
+            </div>
+        </header>
+
+        <main class="store-content">
+            <aside class="categories">
+                <h2>Categories</h2>
+                <h:form>
+                    <ul>
+                        <li>
+                            <h:commandLink value="All Books" 
+                                         action="#{bookStoreBean.showAllBooks}">
+                                <f:ajax render="bookList"/>
+                            </h:commandLink>
+                        </li>
+                        <li>
+                            <h:commandLink value="Programming" 
+                                         action="#{bookStoreBean.filterByCategory('Programming')}">
+                                <f:ajax render="bookList"/>
+                            </h:commandLink>
+                        </li>
+                        <!-- Add more categories as needed -->
+                    </ul>
+                </h:form>
+            </aside>
+
+            <section id="bookList" class="book-grid">
+                <ui:repeat value="#{bookStoreBean.books}" var="book">
+                    <div class="book-card">
+                        <img src="#{request.contextPath}/resources/#{book.imageUrl}"
+                             alt="#{book.title}" 
+                             class="book-cover"/>
+                        <div class="book-info">
+                            <h3>#{book.title}</h3>
+                            <p class="author">by #{book.author}</p>
+                            <p class="price">$#{book.price}</p>
+                            <p class="stock">#{book.stockQuantity} in stock</p>
+                            <h:form>
+                                <h:commandButton value="Add to Cart" 
+                                               action="#{bookStoreBean.addToCart(book.isbn)}"
+                                               styleClass="add-to-cart-btn">
+                                    <f:ajax render="@form :cart-count"/>
+                                </h:commandButton>
+                            </h:form>
+                        </div>
+                    </div>
+                </ui:repeat>
+            </section>
+        </main>
+    </div>
+
+    <!-- Include the chat component -->
+    <ui:include src="chat.xhtml" />
+</h:body>
+</html>
