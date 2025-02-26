@@ -9,16 +9,24 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import learning.jakarta.ai.bookstore.domain.Book;
+import learning.jakarta.ai.bookstore.domain.Cart;
 import learning.jakarta.ai.bookstore.domain.CartItem;
 import learning.jakarta.ai.bookstore.service.BookStoreService;
 import learning.jakarta.ai.bookstore.service.CartSession;
 import lombok.Getter;
 import lombok.Setter;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.ArrayList;
+import java.net.URLEncoder;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
+@Slf4j
 @Named
 @ViewScoped
 public class BookStoreBean implements Serializable {
@@ -26,15 +34,19 @@ public class BookStoreBean implements Serializable {
     @Inject
     private BookStoreService bookStoreService;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Getter
     private List<Book> books;
 
-    @Getter @Setter
+    @Getter
+    @Setter
     private String searchQuery;
 
     @Getter
     private String userId;
 
+    @Getter
     private CartSession currentCart;
 
     private String getUserIdFromCookie() {
@@ -61,6 +73,48 @@ public class BookStoreBean implements Serializable {
         response.addCookie(cookie);
     }
 
+    private void saveCartToCookie() {
+        try {
+            if (currentCart != null) {
+                String cartJson = objectMapper.writeValueAsString(currentCart.getCart());
+                String encodedCart = URLEncoder.encode(cartJson, StandardCharsets.UTF_8);
+                FacesContext context = FacesContext.getCurrentInstance();
+                HttpServletResponse response = (HttpServletResponse) context.getExternalContext().getResponse();
+                Cookie cookie = new Cookie("cart", encodedCart);
+                cookie.setMaxAge(60 * 60 * 24 * 365); // 1 year
+                cookie.setPath("/");
+                response.addCookie(cookie);
+            }
+        } catch (Exception e) {
+            // Log error but continue
+            e.printStackTrace();
+        }
+    }
+
+    private void loadCartFromCookie() {
+        try {
+            FacesContext context = FacesContext.getCurrentInstance();
+            HttpServletRequest request = (HttpServletRequest) context.getExternalContext().getRequest();
+            Cookie[] cookies = request.getCookies();
+
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ("cart".equals(cookie.getName())) {
+                        String encodedCart = cookie.getValue();
+                        String cartJson = URLDecoder.decode(encodedCart, StandardCharsets.UTF_8);
+                        log.info("books on cart: {}", cartJson);
+                        Cart cart = objectMapper.readValue(cartJson, Cart.class);
+                        currentCart.setCart(cart);
+                        return;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Log error but continue with empty cart
+            e.printStackTrace();
+        }
+    }
+
     @PostConstruct
     public void init() {
         // Try to get userId from cookie
@@ -74,8 +128,13 @@ public class BookStoreBean implements Serializable {
             setUserIdCookie(userId);
         }
 
-        // Initialize cart
-        currentCart = bookStoreService.getOrCreateCart(userId);
+
+        // If no cart in cookie, create new one
+        if (currentCart == null) {
+            currentCart = bookStoreService.getOrCreateCart(userId);
+        }
+
+        loadCartFromCookie();
 
         // Load initial book list
         showAllBooks();
@@ -105,6 +164,8 @@ public class BookStoreBean implements Serializable {
         try {
             bookStoreService.addToCart(userId, isbn, 1);
             books = bookStoreService.getAllBooks();
+            currentCart = bookStoreService.getOrCreateCart(userId); // Refresh cart
+            saveCartToCookie(); // Save updated cart to cookie
         } catch (IllegalArgumentException e) {
             // Handle error (e.g., show message to user)
         }
@@ -124,6 +185,8 @@ public class BookStoreBean implements Serializable {
     public void removeFromCart(String isbn) {
         if (currentCart != null) {
             bookStoreService.removeFromCart(userId, isbn);
+            currentCart = bookStoreService.getOrCreateCart(userId); // Refresh cart
+            saveCartToCookie(); // Save updated cart to cookie
         }
     }
 

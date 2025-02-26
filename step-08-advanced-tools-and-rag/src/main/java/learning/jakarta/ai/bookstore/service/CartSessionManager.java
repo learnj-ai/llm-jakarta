@@ -1,7 +1,9 @@
 package learning.jakarta.ai.bookstore.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import learning.jakarta.ai.bookstore.domain.Book;
+import learning.jakarta.ai.bookstore.web.BookStoreBean;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
@@ -10,7 +12,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @ApplicationScoped
 @Slf4j
 public class CartSessionManager {
-
     private final Map<String, CartSession> sessions = new ConcurrentHashMap<>();
 
     public CartSession getOrCreateSession(String userId) {

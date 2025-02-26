@@ -57,7 +57,7 @@ function updateCartCount(cartCountElement) {
 }
 
 
-function connectWebSocket() {
+function connectUpdateWebSocket() {
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const host = window.location.host;
@@ -79,8 +79,7 @@ function connectWebSocket() {
     };
 
     socketUpdate.onclose = function() {
-        // Reconnect after a delay if connection is lost
-        setTimeout(connectWebSocket, 1000);
+        setTimeout(connectUpdateWebSocket, 1000);
     };
 }
 

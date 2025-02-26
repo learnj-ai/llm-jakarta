@@ -13,13 +13,20 @@
     <link rel="stylesheet" href="#{request.contextPath}/resources/css/chat-enhanced.css"/>
     <link rel="stylesheet" href="#{request.contextPath}/resources/css/bookstore.css"/>
     <script src="#{request.contextPath}/resources/js/chat.js"></script>
-    <script src="#{request.contextPath}/jakarta.faces.resource/jsf.js"></script>
 
     <script>
         window.addEventListener("load", function() {
-            connectWebSocket();
+            connectUpdateWebSocket();
         });
 
+        function toggleCart() {
+            const cartDialog = document.getElementById('cartDialog');
+            if (cartDialog.style.display === 'none') {
+                cartDialog.style.display = 'block';
+            } else {
+                cartDialog.style.display = 'none';
+            }
+        }
     </script>
 
 </h:head>
@@ -42,13 +49,40 @@
                     </h:commandButton>
                 </h:form>
             </div>
-            <div class="cart-info">
+            <div class="cart-info" onclick="toggleCart()">
                 <i class="fas fa-shopping-cart"></i>
                 <h:outputText id="cartCount" styleClass="cart-count" value="#{bookStoreBean.cartItemCount}"/>
             </div>
+
+            <!-- Cart Dialog -->
+            <h:panelGroup id="cartDialog" layout="block" styleClass="cart-dialog" style="display: none;">
+                <div class="cart-dialog-content">
+                    <h2>Shopping Cart</h2>
+                    <h:panelGroup id="cartItems">
+                        <ui:repeat value="#{bookStoreBean.currentCart.cart.items}" var="item">
+                            <div class="cart-item">
+                                <span class="cart-item-title">#{item.book.title}</span>
+                                <span class="cart-item-quantity">Qty: #{item.quantity}</span>
+                                <span class="cart-item-price">$#{item.book.price * item.quantity}</span>
+                                <h:form>
+                                    <h:commandButton value="Remove" 
+                                                   action="#{bookStoreBean.removeFromCart(item.book.isbn)}"
+                                                   styleClass="remove-item-btn">
+                                        <f:ajax execute="@form" render=":cartDialog :cartCount :bookList"/>
+                                    </h:commandButton>
+                                </h:form>
+                            </div>
+                        </ui:repeat>
+                        <div class="cart-total">
+                            Total: $#{bookStoreBean.cartTotal}
+                        </div>
+                    </h:panelGroup>
+                    <button onclick="toggleCart()" class="close-cart-btn">Close</button>
+                </div>
+            </h:panelGroup>
             <h:form id="refreshForm" style="display: none;">
                 <h:commandButton id="refreshButton" value="Refresh" action="#{bookStoreBean.refreshBooks}">
-                    <f:ajax execute="@this" render=":bookList :cartCount"/>
+                    <f:ajax execute="@this" render=":bookList :cartCount :cartDialog"/>
                 </h:commandButton>
             </h:form>
         </header>
@@ -95,7 +129,7 @@
                                 <h:commandButton value="Add to Cart" 
                                                action="#{bookStoreBean.addToCart(book.isbn)}"
                                                styleClass="add-to-cart-btn">
-                                    <f:ajax execute="@this" render="@form :bookList :cartCount"/>
+                                    <f:ajax execute="@this" render="@form :bookList :cartCount :cartDialog"/>
                                 </h:commandButton>
                             </h:form>
                         </h:panelGroup>

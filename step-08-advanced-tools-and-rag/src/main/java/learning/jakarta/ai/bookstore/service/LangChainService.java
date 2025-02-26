@@ -77,15 +77,5 @@ public class LangChainService {
         String messageResponse = bookStoreChatService.chat(userId, message);
         consumer.accept(messageResponse);
         consumer.accept("[END]");
-//            .onNext(response -> {
-//                log.info("User {} response: {}", userId, response);
-//                consumer.accept(response);
-//            }).onComplete((response) -> {
-//                log.info("User {} chat complete with response :{}", userId, response);
-//                consumer.accept("[END]");
-//            }).onError(e -> {
-//                log.error("User {} chat error", userId, e);
-//                consumer.accept("[END]");
-//            }).start();
     }
 }

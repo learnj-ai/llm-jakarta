@@ -75,8 +75,6 @@ public class BookStoreService implements Serializable {
     public String addToCart(String userId, String isbn, int quantity) {
         log.info("Adding book {} to cart {}", isbn, userId);
 
-        CartSession cartSession = getOrCreateCart(userId);
-
         Book book = getBookByIsbn(isbn);
         if (book.getStockQuantity() < quantity) {
             throw new IllegalArgumentException("Not enough stock available");
@@ -107,6 +105,7 @@ public class BookStoreService implements Serializable {
                 .orElseThrow(() -> new IllegalArgumentException("Book not found with ISBN: " + isbn));
             int newStock = book.getStockQuantity() + removedQuantity;
             bookRepository.updateStockQuantity(isbn, newStock);
+            bookUpdateWebSocket.notifyBookUpdate();
             return cartSessionManager.removeFromCart(userId, book);
         } else {
             return "Book not found in cart";
