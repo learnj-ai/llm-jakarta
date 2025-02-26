@@ -3,6 +3,7 @@ package learning.jakarta.ai;
 import jakarta.inject.Inject;
 import jakarta.websocket.*;
 import jakarta.websocket.server.ServerEndpoint;
+import learning.jakarta.ai.bookstore.LangChainService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -35,8 +36,9 @@ public class ChatWebSocket {
         }
 
         activeSessions.put(userId, session);
+        session.getUserProperties().put("userId", userId);
 
-        langChainService.sendMessage("Hey there! How can I help you today?", next -> {
+        langChainService.sendMessage("Hey there! How can I help you today?", userId, next -> {
             try {
                 session.getBasicRemote().sendText(next);
                 session.getBasicRemote().sendText("[END]");
@@ -48,10 +50,10 @@ public class ChatWebSocket {
 
     @OnMessage
     public void onMessage(String message, Session session) {
-        langChainService.sendMessage(message, next -> {
+        String userId = (String) session.getUserProperties().get("userId");
+        langChainService.sendMessage(message, userId, next -> {
             try {
                 session.getBasicRemote().sendText(next);
-                session.getBasicRemote().sendText("[END]");
             } catch (IOException e) {
                 log.error("Error occurred", e);
             }

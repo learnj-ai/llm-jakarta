@@ -40,6 +40,21 @@ function getUserId() {
     return userId;
 }
 
+function updateCartCount(cartCountElement) {
+    const userId = getUserId();
+    const contextPath = getApplicationContext();
+    const path = `${contextPath}/rest-api/session/count/${userId}`;
+    console.log(path);
+
+    fetch(path)
+        .then(response => response.json())
+        .then(data => {
+            cartCountElement.textContent = data;
+        })
+        .catch(error => console.error("Error fetching cart count:", error));
+}
+
+
 function connect() {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const host = window.location.host;
@@ -158,7 +173,7 @@ function finalizeStreamingMessage() {
                 const content = block.textContent.toLowerCase();
                 let detectedLang = '';
 
-                if (content.includes('class ') || content.includes('public ') || 
+                if (content.includes('class ') || content.includes('public ') ||
                     content.includes('private ') || content.includes('protected ') ||
                     content.includes('import ') || content.includes('@')) {
                     detectedLang = 'java';
@@ -166,10 +181,10 @@ function finalizeStreamingMessage() {
                     detectedLang = 'html';
                 } else if (content.includes('<?xml') || content.includes('xmlns:')) {
                     detectedLang = 'xml';
-                } else if (content.includes('function ') || content.includes('const ') || 
+                } else if (content.includes('function ') || content.includes('const ') ||
                          content.includes('let ') || content.includes('=>')) {
                     detectedLang = 'javascript';
-                } else if (content.includes('{') && content.includes('}') && 
+                } else if (content.includes('{') && content.includes('}') &&
                          (content.includes(':') || content.includes('@media'))) {
                     detectedLang = 'css';
                 }
@@ -223,7 +238,7 @@ function addMessage(text, type) {
                 const content = block.textContent.toLowerCase();
                 let detectedLang = '';
 
-                if (content.includes('class ') || content.includes('public ') || 
+                if (content.includes('class ') || content.includes('public ') ||
                     content.includes('private ') || content.includes('protected ') ||
                     content.includes('import ') || content.includes('@')) {
                     detectedLang = 'java';
@@ -231,10 +246,10 @@ function addMessage(text, type) {
                     detectedLang = 'html';
                 } else if (content.includes('<?xml') || content.includes('xmlns:')) {
                     detectedLang = 'xml';
-                } else if (content.includes('function ') || content.includes('const ') || 
+                } else if (content.includes('function ') || content.includes('const ') ||
                          content.includes('let ') || content.includes('=>')) {
                     detectedLang = 'javascript';
-                } else if (content.includes('{') && content.includes('}') && 
+                } else if (content.includes('{') && content.includes('}') &&
                          (content.includes(':') || content.includes('@media'))) {
                     detectedLang = 'css';
                 }

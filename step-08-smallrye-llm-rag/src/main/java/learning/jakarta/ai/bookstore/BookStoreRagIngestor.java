@@ -10,6 +10,8 @@ import dev.langchain4j.model.embedding.onnx.allminilml6v2.AllMiniLmL6V2Embedding
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
+import jakarta.annotation.PostConstruct;
+import jakarta.ejb.Startup;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.Initialized;
 import jakarta.enterprise.event.Observes;
@@ -25,6 +27,7 @@ import java.util.Map;
 
 import static dev.langchain4j.data.document.loader.FileSystemDocumentLoader.loadDocuments;
 
+@Startup
 @Log
 @ApplicationScoped
 public class BookStoreRagIngestor {
@@ -59,13 +62,13 @@ public class BookStoreRagIngestor {
         for (Book book : books) {
             // Create a rich text document from book details
             String bookContent = String.format("""
-                Title: %s
-                Author: %s
-                Category: %s
-                Description: %s
-                Price: $%.2f
-                ISBN: %s
-                """,
+                    Title: %s
+                    Author: %s
+                    Category: %s
+                    Description: %s
+                    Price: $%.2f
+                    ISBN: %s
+                    """,
                 book.getTitle(),
                 book.getAuthor(),
                 book.getCategory(),
@@ -85,7 +88,9 @@ public class BookStoreRagIngestor {
         return documents;
     }
 
-    public void ingest(@Observes @Initialized(ApplicationScoped.class) Object pointless) {
+    @PostConstruct
+    public void ingest() {
+        log.info("Ingesting documents for RAG model...");
         long start = System.currentTimeMillis();
 
         DocumentSplitter splitter = DocumentSplitters.recursive(300, 30);
@@ -98,7 +103,7 @@ public class BookStoreRagIngestor {
         List<Document> docs = loadDocs();
         ingestor.ingest(docs);
 
-        log.info(String.format("Book Store: %d documents ingested in %d msec", 
+        log.info(String.format("Book Store: %d documents ingested in %d msec",
             docs.size(), System.currentTimeMillis() - start));
     }
 

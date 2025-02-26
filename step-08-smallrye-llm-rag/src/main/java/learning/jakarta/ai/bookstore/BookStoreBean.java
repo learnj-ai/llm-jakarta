@@ -23,7 +23,7 @@ public class BookStoreBean implements Serializable {
     @Getter @Setter
     private String searchQuery;
     
-    private Cart currentCart;
+    private CartSession currentCart;
 
     @PostConstruct
     public void init() {
@@ -61,11 +61,11 @@ public class BookStoreBean implements Serializable {
     }
     
     public int getCartItemCount() {
-        return currentCart != null ? currentCart.getItems().size() : 0;
+        return currentCart != null ? currentCart.getCart().getItems().size() : 0;
     }
     
     public double getCartTotal() {
-        return currentCart != null ? currentCart.getTotal() : 0.0;
+        return currentCart != null ? currentCart.getCart().getTotal() : 0.0;
     }
     
     public void removeFromCart(String isbn) {

@@ -13,12 +13,25 @@
     <link rel="stylesheet" href="#{request.contextPath}/resources/css/chat-enhanced.css"/>
     <link rel="stylesheet" href="#{request.contextPath}/resources/css/bookstore.css"/>
     <script src="#{request.contextPath}/resources/js/chat.js"></script>
+
+<!--    <script>-->
+<!--        window.addEventListener("load", function() {-->
+<!--            console.log("Page fully loaded");-->
+<!--            const cartCountElement = document.querySelector(".cart-count");-->
+
+<!--            setInterval(() => {-->
+<!--                updateCartCount(cartCountElement);-->
+<!--            }, 5000);-->
+
+<!--            updateCartCount(cartCountElement);-->
+<!--        });-->
+<!--    </script>-->
 </h:head>
 <h:body>
     <div class="bookstore-container">
         <header class="store-header">
             <div class="logo">
-                <img src="#{request.contextPath}/resources/images/jakartaee_logo.jpg" alt="Jakarta EE Logo"/>
+                <img src="#{request.contextPath}/resources/images/jakartaee.jpg" alt="Jakarta EE Logo"/>
                 <h1>Jakarta Book Store</h1>
             </div>
             <div class="search-bar">
@@ -56,7 +69,12 @@
                                 <f:ajax render="bookList"/>
                             </h:commandLink>
                         </li>
-                        <!-- Add more categories as needed -->
+                        <li>
+                            <h:commandLink value="Jakarta EE"
+                                           action="#{bookStoreBean.filterByCategory('Jakarta EE')}">
+                                <f:ajax render="bookList"/>
+                            </h:commandLink>
+                        </li>
                     </ul>
                 </h:form>
             </aside>
@@ -76,7 +94,7 @@
                                 <h:commandButton value="Add to Cart" 
                                                action="#{bookStoreBean.addToCart(book.isbn)}"
                                                styleClass="add-to-cart-btn">
-                                    <f:ajax render="@form :cart-count"/>
+                                    <f:ajax execute="@form" render=":bookList :cart-count"/>
                                 </h:commandButton>
                             </h:form>
                         </div>
