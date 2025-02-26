@@ -1,0 +1,493 @@
+/* Main Page Welcome Message */
+.main-page-content {
+    text-align: center;
+    margin: 50px auto;
+    max-width: 600px;
+    padding: 20px;
+    font-family: 'Poppins', sans-serif;
+    color: #333;
+    align-items: center;
+}
+
+.main-page-content h1 {
+    font-size: 28px;
+    font-weight: bold;
+    color: #1b52a0; /* Jakarta EE blue */
+    margin-bottom: 20px;
+}
+
+.main-page-content p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #555;
+}
+
+.main-page-content img {
+    margin-bottom: 20px;
+    max-width: 300px;
+    height: auto;
+}
+
+/* General container styles */
+.chat-container {
+    width: 90%; /* Default width for smaller screens */
+    height: 70%; /* Default height for smaller screens */
+    position: fixed; /* Fixed position for floating effect */
+    bottom: 20px; /* Distance from the bottom of the screen */
+    right: 10px; /* Distance from the right of the screen */
+    border: 1px solid #ddd;
+    border-radius: 15px;
+    background-color: #fdfdfd;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 1000; /* Ensure it stays on top */
+}
+
+/* Larger screens */
+@media (min-width: 768px) {
+    .chat-container {
+        width: 500px; /* Width of the chat window */
+        height: 750px; /* Height of the chat window */
+        bottom: 80px; /* Distance from the bottom of the screen */
+        right: 20px; /* Distance from the right of the screen */
+    }
+}
+
+.chat-container.fullscreen {
+    top: 20px !important;
+    left: 20px !important;
+    right: 20px !important;
+    bottom: 20px !important;
+    width: calc(100% - 40px) !important;
+    height: calc(100% - 40px) !important;
+    border-radius: 15px !important; /* Keep the rounded corners */
+    background-color: #fdfdfd;      /* Ensure the background is visible */
+    z-index: 9999 !important;      /* Keep it above other elements */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); /* Make it look more “floating” */
+}
+
+.chat-container.fullscreen * {
+    font-size: 24px;
+}
+
+.chat-fullscreen {
+    position: absolute; /* or relative if you prefer */
+    top: 10px;
+    right: 45px;
+    background-color: transparent;
+    color: #1b52a0; /* Jakarta EE blue */
+    border: none;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.3s;
+}
+.chat-fullscreen:hover {
+    color: #14427a;
+}
+.chat-fullscreen:active {
+    color: #ffd700;
+}
+
+/* Header styles */
+.chat-header {
+    background-color: #fdfdfd; /* Neutral white background */
+    color: #1b52a0; /* Jakarta EE blue for text */
+    text-align: center;
+    padding: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 3px solid #1b52a0; /* Adds a subtle separator */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Light shadow for depth */
+}
+
+/* Logo styles */
+.jakarta-logo {
+    max-width: 100px;
+    height: auto;
+    display: block;
+}
+
+/* Title styles */
+.chat-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #1b52a0; /* Matches Jakarta EE logo's blue */
+    margin: 0;
+}
+
+/* Chatbot Icon Button */
+.chat-icon {
+    position: fixed;
+    bottom: 20px; /* Position at the bottom of the screen */
+    right: 20px; /* Position on the right side */
+    background-color: #1b52a0; /* Jakarta EE blue */
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    z-index: 1001; /* Ensure it stays above the chat container */
+    transition: transform 0.3s, background-color 0.3s;
+}
+
+.chat-icon:hover {
+    background-color: #14427a; /* Darker blue for hover */
+    transform: scale(1.1); /* Slight enlargement on hover */
+}
+
+.chat-icon:active {
+    transform: scale(0.95); /* Shrink slightly on click */
+}
+
+/* Input container styles */
+.chat-input-container {
+    display: flex;
+    padding: 15px 20px;
+    background-color: #fff; /* Bright background for input */
+    border-top: 1px solid #ddd;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Chat window styles */
+.chat-window {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: #f4f4f4; /* Light gray for contrast */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-sizing: border-box;
+}
+
+.chat-window p {
+    margin: 0;
+    padding: 10px 15px;
+    border-radius: 20px;
+    word-wrap: break-word;
+    max-width: 75%;
+    display: inline-block;
+    font-size: 14px;
+}
+
+.message-bubble {
+    display: block;
+    margin: 5px 0;
+    padding: 10px 15px;
+    border-radius: 15px;
+    word-wrap: break-word;
+    max-width: 75%;
+    box-sizing: border-box;
+}
+
+.message-bubble.user {
+    background-color: #1b52a0; /* Jakarta EE blue */
+    color: #fff;
+    align-self: flex-end;
+    text-align: left;
+    border-top-right-radius: 0;
+}
+
+.message-bubble.bot {
+    background-color: #ffd700;
+    color: #333;
+    align-self: flex-start;
+    text-align: left;
+    border-top-left-radius: 0;
+}
+
+.markdown-content {
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.6;
+    font-size: 14px;
+    color: #333;
+    overflow-wrap: break-word; /* Prevent long text from breaking layout */
+}
+
+/* Markdown-specific styles */
+.markdown-content h1, .markdown-content h2, .markdown-content h3 {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 10px 0 5px;
+}
+
+.markdown-content p {
+    margin: 5px 0;
+}
+
+.markdown-content ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.markdown-content li {
+    margin-bottom: 5px;
+}
+
+.markdown-content code {
+    font-family: 'Courier New', Courier, monospace;
+    background-color: #f4f4f4;
+    padding: 2px 4px;
+    border-radius: 3px;
+    color: #d6336c;
+}
+
+/* Code blocks */
+.markdown-content pre {
+    background-color: #f4f4f4;
+    padding: 10px;
+    border-radius: 5px;
+    overflow-x: auto;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+}
+
+/* Prevent excessive Markdown block expansion */
+.markdown-content img, .markdown-content table {
+    max-width: 100%; /* Ensure images and tables fit within the bubble */
+    height: auto;
+    display: block;
+}
+
+/* User messages */
+.chat-window p.user {
+    background-color: #1b52a0; /* Jakarta EE blue */
+    color: #fff;
+    align-self: flex-end;
+    border-top-right-radius: 0;
+}
+
+/* Minimize button styles */
+.chat-minimize {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: transparent;
+    color: #1b52a0; /* Jakarta EE blue */
+    border: none;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.3s;
+}
+
+.chat-minimize:hover {
+    color: #14427a; /* Darker blue for hover */
+}
+
+.chat-minimize:active {
+    color: #ffd700; /* Jakarta EE orange for active click */
+}
+
+
+/* Bot messages */
+.chat-window p.bot {
+    background-color: #ffd700; /* Jakarta EE orange */
+    color: #333;
+    align-self: flex-start;
+    border-top-left-radius: 0;
+}
+
+/* Input container styles */
+.chat-input-container {
+    display: flex;
+    padding: 15px 20px;
+    background-color: #fff; /* Bright background for input */
+    border-top: 1px solid #ddd;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Chat input styles */
+.chat-input {
+    flex-grow: 1;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.3s ease;
+}
+
+.chat-input:focus {
+    border-color: #1b52a0; /* Jakarta EE blue */
+    outline: none;
+}
+
+/* Send button styles */
+.chat-send-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #fff;
+    background-color: #1b52a0; /* Jakarta EE blue */
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s;
+}
+
+.chat-send-button:hover {
+    background-color: #14427a; /* Darker blue for hover effect */
+    transform: scale(1.05);
+}
+
+.chat-send-button:active {
+    transform: scale(0.95);
+}
+
+/* Animations */
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.message {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.message.user {
+    justify-content: flex-end;
+}
+
+.message.bot {
+    justify-content: flex-start;
+}
+
+/* Message bubble styles */
+.message p {
+    margin: 0;
+    padding: 10px 15px;
+    border-radius: 20px;
+    max-width: 75%;
+    word-wrap: break-word;
+    font-size: 14px;
+}
+
+.message.user p {
+    background-color: #007bff;
+    color: #fff;
+    border-top-right-radius: 0;
+}
+
+.message.bot p {
+    background-color: #e9ecef;
+    color: #333;
+    border-top-left-radius: 0;
+}
+
+/* Typing indicator styles */
+.message.typing p {
+    background-color: transparent;
+    padding: 0;
+}
+
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    background-color: #e9ecef;
+    border-radius: 20px;
+    border-top-left-radius: 0;
+}
+
+.typing-indicator span {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin: 0 2px;
+    background-color: #777;
+    border-radius: 50%;
+    animation: typing 1s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0% {
+        opacity: 0.2;
+        transform: translateY(0);
+    }
+    50% {
+        opacity: 1;
+        transform: translateY(-5px);
+    }
+    100% {
+        opacity: 0.2;
+        transform: translateY(0);
+    }
+}
+
+.error-bubble {
+    position: fixed;
+    bottom: 120px;
+    right: 20px;
+    background-color: #ff4d4f;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}

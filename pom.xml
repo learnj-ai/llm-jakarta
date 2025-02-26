@@ -21,5 +21,6 @@
         <module>step-04-inmemory-rag</module>
         <module>step-05-easy-rag</module>
         <module>step-06-advanced-rag</module>
+        <module>step-08-advanced-tools-and-rag</module>
     </modules>
 </project>
