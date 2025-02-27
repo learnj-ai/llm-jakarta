@@ -1004,6 +1004,90 @@
     color: var(--primary-color);
 }
 
+/* Error Popup */
+.error-bubble {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #ff4757, #ff6b81);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+    z-index: 2000;
+    display: none;
+    animation: errorPopup 0.3s ease-out;
+    cursor: pointer;
+    font-weight: 500;
+    text-align: center;
+    min-width: 300px;
+    max-width: 80%;
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    font-size: 15px;
+    line-height: 1.4;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.error-bubble::before {
+    content: '⚠️';
+    margin-right: 8px;
+}
+
+.error-bubble:hover {
+    background: linear-gradient(135deg, #ff6b81, #ff4757);
+}
+
+@keyframes errorPopup {
+    from {
+        transform: translate(-50%, -100%);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+/* Chat Controls */
+.chat-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.chat-controls button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.chat-controls button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.chat-controls button:active {
+    transform: scale(0.95);
+}
+
+.chat-controls i {
+    font-size: 14px;
+}
+
+.chat-fullscreen i {
+    font-size: 12px;
+}
+
 /* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
     :root {
