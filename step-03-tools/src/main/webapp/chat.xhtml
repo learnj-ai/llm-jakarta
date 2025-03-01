@@ -3,41 +3,106 @@
       xmlns:h="http://xmlns.jcp.org/jsf/html">
 <h:head>
     <title>Welcome to Jakarta EE Chatbot</title>
+    <link rel="icon" type="image/jpeg" href="#{request.contextPath}/resources/images/jakartaee.jpg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&amp;display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="#{request.contextPath}/resources/css/chat.css?version=1.1"/>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&amp;family=Fira+Code:wght@400;500&amp;display=swap" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="#{request.contextPath}/resources/css/chat-enhanced.css"/>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/xml.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/tokyo-night-dark.min.css" rel="stylesheet" />
     <script src="#{request.contextPath}/resources/js/chat.js"></script>
     <script>
         function toggleChat() {
             const chatContainer = document.getElementById("chat-container");
-            chatContainer.style.display = chatContainer.style.display === "none" ? "flex" : "none";
+            const isOpening = getComputedStyle(chatContainer).display === "none";
 
-            if (chatContainer.style.display === "flex" &amp;&amp; (!socket || socket.readyState !== WebSocket.OPEN)) {
-                connect();
+            if (isOpening) {
+                chatContainer.style.display = "flex";
+
+                // Initialize WebSocket connection
+                initializeSocket()
+                    .then(() => {
+                        showWelcomeMessage();
+                    })
+                    .catch((error) => {
+                        console.error("Socket initialization failed:", error);
+                        showErrorBubble("Unable to connect. Please try again.");
+                    });
+            } else {
+                chatContainer.style.display = "none";
+                // Clean up WebSocket if chat is closed
+                if (socket) {
+                    socket.close();
+                    cleanupWebSocket();
+                    socket = null;
+                }
+                // Clear any error messages
+                const errorBubble = document.getElementById("error-bubble");
+                if (errorBubble) {
+                    errorBubble.style.display = "none";
+                }
             }
+        }
+
+        function toggleFullScreen() {
+            const chatContainer = document.getElementById("chat-container");
+            const fullscreenButton = document.querySelector('.chat-fullscreen i');
+            const chatIcon = document.querySelector('.chat-icon');
+
+            chatContainer.classList.toggle("fullscreen");
+
+            if (chatContainer.classList.contains("fullscreen")) {
+                fullscreenButton.classList.remove("fa-expand");
+                fullscreenButton.classList.add("fa-compress");
+                chatIcon.style.display = 'none';
+
+                // Focus input when going fullscreen
+                setTimeout(() => {
+                    document.getElementById('message-input').focus();
+                }, 100);
+            } else {
+                fullscreenButton.classList.remove("fa-compress");
+                fullscreenButton.classList.add("fa-expand");
+                chatIcon.style.display = 'flex';
+            }
+
+            // Scroll to bottom after layout changes
+            setTimeout(() => {
+                const chatWindow = document.getElementById('chat-window');
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }, 150);
         }
 
         window.onload = function () {
             const messageInput = document.getElementById("message-input");
-            messageInput.addEventListener("keydown", function (event) {
+            messageInput.addEventListener("keypress", function (event) {
                 if (event.key === "Enter") {
-                    event.preventDefault();
-                    if (event.shiftKey) {
-                        messageInput.value += "\n";
-                    } else {
-                        sendMessage();
-                    }
+                    sendMessage(); // Send message when "Enter" is pressed
+                    event.preventDefault(); // Prevent default form submission
                 }
             });
         };
 
-        function toggleFullScreen() {
-            const chatContainer = document.getElementById("chat-container");
-            chatContainer.classList.toggle("fullscreen");
-        }
+        function showWelcomeMessage() {
+            const chatWindow = document.getElementById("chat-window");
+            if (chatWindow.children.length === 0) {
+                const welcomeMessage = `Hi there! 👋 I'm your Jakarta EE AI assistant. I can help you with:
+* Learning about Jakarta EE technologies
+* Understanding best practices
+* Solving common problems
+* Finding relevant documentation
 
+Feel free to ask any questions!`;
+
+                setTimeout(() => {
+                    addMessage(welcomeMessage, "bot");
+                }, 500);
+            }
+        }
     </script>
 </h:head>
 <h:body>
@@ -54,26 +119,48 @@
     <!-- Chat Container -->
     <div id="chat-container" class="chat-container" style="display: none;">
         <div class="chat-header">
-            <img src="#{request.contextPath}/resources/images/jakartaee_logo.jpg" alt="Jakarta EE Logo"
+            <img src="#{request.contextPath}/resources/images/jakartaee.jpg" alt="Jakarta EE Logo"
                  class="jakarta-logo"/>
-            <h1 class="chat-title">AI Chatbot</h1>
-            <button class="chat-minimize" onclick="toggleChat()">−</button>
-            <button class="chat-fullscreen" onclick="toggleFullScreen()">⤢</button>
+            <div class="chat-header-content">
+                <h1 class="chat-title">Jakarta EE Assistant</h1>
+                <p class="chat-subtitle">Ask me anything about Jakarta EE!</p>
+            </div>
+            <div class="chat-controls">
+                <button class="chat-minimize" onclick="toggleChat()" title="Minimize chat">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button class="chat-fullscreen" onclick="toggleFullScreen()" title="Toggle fullscreen">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
         </div>
+
         <div id="error-bubble" class="error-bubble" style="display: none;">
             Unable to connect to the chatbot. Please try again later.
         </div>
 
         <div id="chat-window" class="chat-window"></div>
+        <div id="loading-indicator" class="loading-indicator" style="display: none;">
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
         <div class="chat-input-container">
-            <textarea id="message-input" class="chat-input"  placeholder="Type your message here..."/>
-            <button class="chat-send-button" onclick="sendMessage()">Send</button>
+            <input id="message-input" class="chat-input" type="text" 
+                   placeholder="Type your message here... (Press Enter to send)"
+                   aria-label="Chat message input"/>
+            <button class="chat-send-button" onclick="sendMessage()" title="Send message">
+                <i class="fas fa-paper-plane"></i>
+            </button>
         </div>
     </div>
 
     <!-- Chatbot Icon -->
-    <button class="chat-icon" onclick="toggleChat()">
-        💬
+    <button class="chat-icon" onclick="toggleChat()" title="Chat with AI Assistant">
+        <i class="fas fa-robot"></i>
+        <span class="notification-dot"></span>
     </button>
 </h:body>
 </html>

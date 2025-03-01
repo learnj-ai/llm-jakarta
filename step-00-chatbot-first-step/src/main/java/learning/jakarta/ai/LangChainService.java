@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 @ApplicationScoped
 @NoArgsConstructor
 public class LangChainService {
-    private OpenAiChatModel chatModel;
+    private volatile OpenAiChatModel chatModel;
 
     @Inject
     public LangChainService(LangChain4JConfig config) {
@@ -20,6 +20,7 @@ public class LangChainService {
                 .apiKey(config.getApiKey())
                 .modelName(config.getModelName())
                 .temperature(config.getTemperature())
+                .topP(config.getTopP())
                 .timeout(config.getTimeout())
                 .maxTokens(config.getMaxTokens())
                 .frequencyPenalty(config.getFrequencyPenalty())
@@ -31,5 +32,21 @@ public class LangChainService {
     public void sendMessage(String message, Consumer<String> consumer) {
         log.info("User message: {}", message);
         consumer.accept(chatModel.generate(message));
+    }
+
+    public synchronized void updateConfiguration(LangChain4JConfig config) {
+        log.info("Updating configuration with new settings");
+        chatModel = OpenAiChatModel.builder()
+                .apiKey(config.getApiKey())
+                .modelName(config.getModelName())
+                .temperature(config.getTemperature())
+                .topP(config.getTopP())
+                .timeout(config.getTimeout())
+                .maxTokens(config.getMaxTokens())
+                .frequencyPenalty(config.getFrequencyPenalty())
+                .logRequests(config.isLogRequests())
+                .logResponses(config.isLogResponses())
+                .build();
+        log.info("Configuration updated successfully");
     }
 }

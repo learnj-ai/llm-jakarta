@@ -1,6 +1,8 @@
 package learning.jakarta.ai;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -16,12 +18,24 @@ public class LangChain4JConfig {
     private String apiKey;
 
     @Inject
+    @ConfigProperty(name = "langchain4j.open-ai.chat-model.allowed-models")
+    private String allowedModels;
+
+    @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.model-name")
     private String modelName;
+
+    public List<String> getAllowedModelsList() {
+        return Arrays.asList(allowedModels.split(","));
+    }
 
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.temperature")
     private double temperature;
+
+    @Inject
+    @ConfigProperty(name = "langchain4j.open-ai.chat-model.top-p")
+    private double topP;
 
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.timeout")
@@ -42,4 +56,3 @@ public class LangChain4JConfig {
     private boolean logResponses;
 
 }
-

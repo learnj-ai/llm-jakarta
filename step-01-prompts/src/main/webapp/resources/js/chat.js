@@ -287,25 +287,25 @@ function toggleChat() {
 function toggleFullScreen() {
     const chatContainer = document.getElementById("chat-container");
     const chatIcon = document.querySelector('.chat-icon');
-    const fullscreenButton = document.querySelector('.chat-fullscreen');
+    const fullscreenButton = document.querySelector('.chat-fullscreen i');
 
     // Add transition class
     chatContainer.classList.add('transitioning');
-
-    // Toggle fullscreen
     chatContainer.classList.toggle("fullscreen");
 
     if (chatContainer.classList.contains("fullscreen")) {
+        fullscreenButton.classList.remove("fa-expand");
+        fullscreenButton.classList.add("fa-compress");
         chatIcon.style.display = 'none';
-        fullscreenButton.title = "Exit fullscreen";
 
         // Focus input when going fullscreen
         setTimeout(() => {
             document.getElementById('message-input').focus();
         }, 300);
     } else {
+        fullscreenButton.classList.remove("fa-compress");
+        fullscreenButton.classList.add("fa-expand");
         chatIcon.style.display = 'flex';
-        fullscreenButton.title = "Enter fullscreen";
     }
 
     // Handle layout changes

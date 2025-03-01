@@ -6,31 +6,57 @@ let markdownBuffer = ""; // Buffer to hold Markdown fragments during streaming
 marked.use({
     pedantic: false,
     gfm: true,
-    breaks: false
+    breaks: false,
+    highlight: function(code, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+            try {
+                return hljs.highlight(code, { language: lang }).value;
+            } catch (err) {
+                console.error('Failed to highlight:', err);
+            }
+        }
+        try {
+            // Attempt to auto-detect language if not specified
+            return hljs.highlightAuto(code).value;
+        } catch (err) {
+            console.error('Failed to auto-highlight:', err);
+        }
+        return code;
+    }
+});
+
+// Initialize highlight.js
+hljs.configure({
+    ignoreUnescapedHTML: true,
+    languages: ['java', 'xml', 'html', 'javascript', 'css']
 });
 
 function getUserId() {
-    let userId = getCookie("userId");
+    let userId = localStorage.getItem("userId");
     if (!userId) {
-        const browserInfo = navigator.userAgentData ?
-            JSON.stringify(navigator.userAgentData) :
-            navigator.userAgent;
-        userId = `user-${btoa(browserInfo).substring(0, 12)}`;
-        setCookie("userId", userId, 365);
+        userId = `user-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+        localStorage.setItem("userId", userId);
     }
     return userId;
 }
 
-function setCookie(name, value, days) {
-    const expires = new Date(Date.now() + days * 864e5).toUTCString();
-    document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/';
-}
+function cleanupWebSocket() {
+    // Clear any pending timeouts
+    if (socket && socket.messageTimeout) {
+        clearTimeout(socket.messageTimeout);
+        socket.messageTimeout = null;
+    }
 
-function getCookie(name) {
-    return document.cookie.split('; ').reduce((r, v) => {
-        const parts = v.split('=');
-        return parts[0] === name ? decodeURIComponent(parts[1]) : r;
-    }, '');
+    // Re-enable controls
+    const input = document.getElementById("message-input");
+    const sendButton = document.querySelector('.chat-send-button');
+    if (input && sendButton) {
+        input.disabled = false;
+        sendButton.disabled = false;
+        sendButton.style.opacity = '1';
+    }
+
+    hideTypingIndicator();
 }
 
 function connect() {
@@ -46,10 +72,22 @@ function connect() {
 
         socket.onmessage = function (event) {
             const data = event.data;
+            const loadingIndicator = document.getElementById("loading-indicator");
+            const input = document.getElementById("message-input");
+            const sendButton = document.querySelector('.chat-send-button');
 
             if (data === "[END]") {
                 finalizeStreamingMessage();
-                hideTypingIndicator();
+                loadingIndicator.style.display = "none";
+                cleanupWebSocket();
+
+                // Highlight any code blocks in the message
+                if (currentStreamingMessage) {
+                    const codeBlocks = currentStreamingMessage.querySelectorAll('pre code');
+                    codeBlocks.forEach(block => {
+                        hljs.highlightElement(block);
+                    });
+                }
             } else {
                 if (!currentStreamingMessage) {
                     createNewBotBubble();
@@ -64,36 +102,90 @@ function connect() {
 
         socket.onclose = function () {
             console.log("Disconnected from WebSocket");
-            hideTypingIndicator();
+            cleanupWebSocket();
             showErrorBubble("The connection to the chatbot has been closed. Please refresh the page to reconnect.");
         };
 
         socket.onerror = function (error) {
             console.error("WebSocket error:", error);
-            hideTypingIndicator();
+            cleanupWebSocket();
             showErrorBubble("Unable to connect to the chatbot. Please try again later.");
         };
     } catch (e) {
         console.error("WebSocket connection failed:", e);
+        cleanupWebSocket();
         showErrorBubble("Unable to connect to the chatbot. Please try again later.");
     }
+}
+
+function initializeSocket() {
+    return new Promise((resolve, reject) => {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            resolve(socket);
+            return;
+        }
+
+        connect();
+
+        const connectionTimeout = setTimeout(() => {
+            reject(new Error("Connection timeout"));
+        }, 5000);
+
+        const checkConnection = setInterval(() => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                clearTimeout(connectionTimeout);
+                clearInterval(checkConnection);
+                resolve(socket);
+            } else if (!socket || socket.readyState === WebSocket.CLOSED) {
+                clearTimeout(connectionTimeout);
+                clearInterval(checkConnection);
+                reject(new Error("Connection failed"));
+            }
+        }, 100);
+    });
 }
 
 function sendMessage() {
     const input = document.getElementById("message-input");
     const message = input.value.trim();
+    const sendButton = document.querySelector('.chat-send-button');
 
     if (message) {
+        // Disable input and button while sending
+        input.disabled = true;
+        sendButton.disabled = true;
+        sendButton.style.opacity = '0.7';
+
         addMessage(message, "user");
-        if (socket.readyState === WebSocket.OPEN) {
-            showTypingIndicator();
-            socket.send(message);
-        } else {
-            console.error("Failed to send message: WebSocket is not open");
-            showErrorBubble("Failed to send message. Please try again.");
-        }
-        input.value = "";
+
+        initializeSocket()
+            .then(() => {
+                sendMessageToSocket(message, input, sendButton);
+            })
+            .catch((error) => {
+                console.error("Socket initialization failed:", error);
+                cleanupWebSocket();
+                showErrorBubble("Unable to connect to the chatbot. Please try again.");
+            });
     }
+}
+
+function sendMessageToSocket(message, input, sendButton) {
+    const loadingIndicator = document.getElementById("loading-indicator");
+    loadingIndicator.style.display = "flex";
+    socket.send(message);
+    input.value = "";
+
+    // Add timeout handler for response
+    const messageTimeout = setTimeout(() => {
+        console.error("Message response timeout");
+        showErrorBubble("No response from server. Please try again.");
+        loadingIndicator.style.display = "none";
+        cleanupWebSocket();
+    }, 30000); // 30 second timeout
+
+    // Store timeout ID to clear it when response is received
+    socket.messageTimeout = messageTimeout;
 }
 
 function createNewBotBubble() {
@@ -102,7 +194,8 @@ function createNewBotBubble() {
     currentStreamingMessage.classList.add("message-bubble", "bot");
     chatWindow.appendChild(currentStreamingMessage);
 
-    chatWindow.scrollTop = chatWindow.scrollHeight;
+    // Smooth scroll to the new message
+    currentStreamingMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
 }
 
 function appendToStreamingBuffer(textFragment) {
@@ -115,7 +208,61 @@ function appendToStreamingBuffer(textFragment) {
 
 function finalizeStreamingMessage() {
     if (currentStreamingMessage) {
+        // Parse markdown and wrap in markdown-content div
         currentStreamingMessage.innerHTML = `<div class="markdown-content">${marked.parse(markdownBuffer)}</div>`;
+
+        // Find and enhance code blocks
+        const codeBlocks = currentStreamingMessage.querySelectorAll('pre code');
+        codeBlocks.forEach(block => {
+            // Auto-detect language if not specified
+            if (!block.className) {
+                const content = block.textContent.toLowerCase();
+                let detectedLang = '';
+
+                if (content.includes('class ') || content.includes('public ') || 
+                    content.includes('private ') || content.includes('protected ') ||
+                    content.includes('import ') || content.includes('@')) {
+                    detectedLang = 'java';
+                } else if (content.includes('<!doctype html') || content.includes('<html')) {
+                    detectedLang = 'html';
+                } else if (content.includes('<?xml') || content.includes('xmlns:')) {
+                    detectedLang = 'xml';
+                } else if (content.includes('function ') || content.includes('const ') || 
+                         content.includes('let ') || content.includes('=>')) {
+                    detectedLang = 'javascript';
+                } else if (content.includes('{') && content.includes('}') && 
+                         (content.includes(':') || content.includes('@media'))) {
+                    detectedLang = 'css';
+                }
+
+                if (detectedLang) {
+                    block.className = `language-${detectedLang}`;
+                    block.parentElement.className = `language-${detectedLang}`;
+                }
+            } else {
+                // Copy the language class to the pre element
+                const lang = block.className.replace('language-', '');
+                block.parentElement.className = `language-${lang}`;
+            }
+
+            // Add copy button to code blocks
+            const pre = block.parentElement;
+            const copyButton = document.createElement('button');
+            copyButton.className = 'copy-code-button';
+            copyButton.innerHTML = '<i class="fas fa-copy"></i>';
+            copyButton.onclick = function() {
+                navigator.clipboard.writeText(block.textContent).then(() => {
+                    copyButton.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(() => {
+                        copyButton.innerHTML = '<i class="fas fa-copy"></i>';
+                    }, 2000);
+                });
+            };
+            pre.appendChild(copyButton);
+
+            hljs.highlightElement(block);
+        });
+
         currentStreamingMessage = null; // Reset for the next bot message
         markdownBuffer = ""; // Clear the buffer
     }
@@ -128,11 +275,67 @@ function addMessage(text, type) {
     messageElement.classList.add("message-bubble", type);
     if (type === "bot") {
         messageElement.innerHTML = `<div class="markdown-content">${marked.parse(text)}</div>`;
+
+        // Process code blocks in bot messages
+        const codeBlocks = messageElement.querySelectorAll('pre code');
+        codeBlocks.forEach(block => {
+            // Auto-detect language if not specified
+            if (!block.className) {
+                const content = block.textContent.toLowerCase();
+                let detectedLang = '';
+
+                if (content.includes('class ') || content.includes('public ') || 
+                    content.includes('private ') || content.includes('protected ') ||
+                    content.includes('import ') || content.includes('@')) {
+                    detectedLang = 'java';
+                } else if (content.includes('<!doctype html') || content.includes('<html')) {
+                    detectedLang = 'html';
+                } else if (content.includes('<?xml') || content.includes('xmlns:')) {
+                    detectedLang = 'xml';
+                } else if (content.includes('function ') || content.includes('const ') || 
+                         content.includes('let ') || content.includes('=>')) {
+                    detectedLang = 'javascript';
+                } else if (content.includes('{') && content.includes('}') && 
+                         (content.includes(':') || content.includes('@media'))) {
+                    detectedLang = 'css';
+                }
+
+                if (detectedLang) {
+                    block.className = `language-${detectedLang}`;
+                    block.parentElement.className = `language-${detectedLang}`;
+                }
+            } else {
+                // Copy the language class to the pre element
+                const lang = block.className.replace('language-', '');
+                block.parentElement.className = `language-${lang}`;
+            }
+
+            // Add copy button to code blocks
+            const pre = block.parentElement;
+            const copyButton = document.createElement('button');
+            copyButton.className = 'copy-code-button';
+            copyButton.innerHTML = '<i class="fas fa-copy"></i>';
+            copyButton.onclick = function() {
+                navigator.clipboard.writeText(block.textContent).then(() => {
+                    copyButton.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(() => {
+                        copyButton.innerHTML = '<i class="fas fa-copy"></i>';
+                    }, 2000);
+                });
+            };
+            pre.appendChild(copyButton);
+
+            hljs.highlightElement(block);
+        });
     } else {
         messageElement.textContent = text;
     }
     chatWindow.appendChild(messageElement);
-    chatWindow.scrollTop = chatWindow.scrollHeight;
+
+    // Smooth scroll to the new message with a slight delay to ensure proper rendering
+    setTimeout(() => {
+        messageElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 50);
 }
 
 function showTypingIndicator() {
@@ -169,7 +372,25 @@ function showErrorBubble(message) {
     errorBubble.textContent = message;
     errorBubble.style.display = "flex";
 
+    // Add warning icon if not present in the message
+    if (!message.includes('⚠️')) {
+        errorBubble.textContent = '⚠️ ' + message;
+    }
+
+    // Click to dismiss
     errorBubble.onclick = function () {
-        errorBubble.style.display = "none";
+        hideErrorBubble();
     };
+
+    // Auto dismiss after 5 seconds
+    setTimeout(hideErrorBubble, 5000);
+}
+
+function hideErrorBubble() {
+    const errorBubble = document.getElementById("error-bubble");
+    errorBubble.style.opacity = '0';
+    setTimeout(() => {
+        errorBubble.style.display = 'none';
+        errorBubble.style.opacity = '1';
+    }, 300);
 }

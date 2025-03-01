@@ -40,6 +40,25 @@ function getUserId() {
     return userId;
 }
 
+function cleanupWebSocket() {
+    // Clear any pending timeouts
+    if (socket && socket.messageTimeout) {
+        clearTimeout(socket.messageTimeout);
+        socket.messageTimeout = null;
+    }
+
+    // Re-enable controls
+    const input = document.getElementById("message-input");
+    const sendButton = document.querySelector('.chat-send-button');
+    if (input && sendButton) {
+        input.disabled = false;
+        sendButton.disabled = false;
+        sendButton.style.opacity = '1';
+    }
+
+    hideTypingIndicator();
+}
+
 function connect() {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const host = window.location.host;
@@ -54,10 +73,13 @@ function connect() {
         socket.onmessage = function (event) {
             const data = event.data;
             const loadingIndicator = document.getElementById("loading-indicator");
+            const input = document.getElementById("message-input");
+            const sendButton = document.querySelector('.chat-send-button');
 
             if (data === "[END]") {
                 finalizeStreamingMessage();
                 loadingIndicator.style.display = "none";
+                cleanupWebSocket();
 
                 // Highlight any code blocks in the message
                 if (currentStreamingMessage) {
@@ -80,19 +102,47 @@ function connect() {
 
         socket.onclose = function () {
             console.log("Disconnected from WebSocket");
-            hideTypingIndicator();
+            cleanupWebSocket();
             showErrorBubble("The connection to the chatbot has been closed. Please refresh the page to reconnect.");
         };
 
         socket.onerror = function (error) {
             console.error("WebSocket error:", error);
-            hideTypingIndicator();
+            cleanupWebSocket();
             showErrorBubble("Unable to connect to the chatbot. Please try again later.");
         };
     } catch (e) {
         console.error("WebSocket connection failed:", e);
+        cleanupWebSocket();
         showErrorBubble("Unable to connect to the chatbot. Please try again later.");
     }
+}
+
+function initializeSocket() {
+    return new Promise((resolve, reject) => {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            resolve(socket);
+            return;
+        }
+
+        connect();
+
+        const connectionTimeout = setTimeout(() => {
+            reject(new Error("Connection timeout"));
+        }, 5000);
+
+        const checkConnection = setInterval(() => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                clearTimeout(connectionTimeout);
+                clearInterval(checkConnection);
+                resolve(socket);
+            } else if (!socket || socket.readyState === WebSocket.CLOSED) {
+                clearTimeout(connectionTimeout);
+                clearInterval(checkConnection);
+                reject(new Error("Connection failed"));
+            }
+        }, 100);
+    });
 }
 
 function sendMessage() {
@@ -107,24 +157,35 @@ function sendMessage() {
         sendButton.style.opacity = '0.7';
 
         addMessage(message, "user");
-        if (socket.readyState === WebSocket.OPEN) {
-            const loadingIndicator = document.getElementById("loading-indicator");
-            loadingIndicator.style.display = "flex";
-            socket.send(message);
-        } else {
-            console.error("Failed to send message: WebSocket is not open");
-            showErrorBubble("Failed to send message. Please try again.");
-        }
-        input.value = "";
 
-        // Re-enable input and button
-        setTimeout(() => {
-            input.disabled = false;
-            sendButton.disabled = false;
-            sendButton.style.opacity = '1';
-            input.focus();
-        }, 500);
+        initializeSocket()
+            .then(() => {
+                sendMessageToSocket(message, input, sendButton);
+            })
+            .catch((error) => {
+                console.error("Socket initialization failed:", error);
+                cleanupWebSocket();
+                showErrorBubble("Unable to connect to the chatbot. Please try again.");
+            });
     }
+}
+
+function sendMessageToSocket(message, input, sendButton) {
+    const loadingIndicator = document.getElementById("loading-indicator");
+    loadingIndicator.style.display = "flex";
+    socket.send(message);
+    input.value = "";
+
+    // Add timeout handler for response
+    const messageTimeout = setTimeout(() => {
+        console.error("Message response timeout");
+        showErrorBubble("No response from server. Please try again.");
+        loadingIndicator.style.display = "none";
+        cleanupWebSocket();
+    }, 30000); // 30 second timeout
+
+    // Store timeout ID to clear it when response is received
+    socket.messageTimeout = messageTimeout;
 }
 
 function createNewBotBubble() {
