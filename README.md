@@ -93,19 +93,19 @@ Replace `<document_dir>` with the path to your documents directory.
 ## Screenshots
 
 ### Welcome Page
-![Welcome Page](images/welcome.png)
+![Welcome Page](images/welcome-2025.png)
 
 ### Chat Interface
-![Chat Interface](images/chatbot.png)
+![Chat Interface](images/chatbot-2025.png)
 
 ### Configuration Interface
-![Configuration Interface](images/config.png)
+![Configuration Interface](images/config-2025.png)
 
 ### Full Screen Chat View
-![Full Screen Chat](images/fullscreen.png)
+![Full Screen Chat](images/fullscreen-2025.png)
 
 ### Tool Integration Example
-![Tool Integration](images/tool-example.png)
+![Tool Integration](images/tool-example-2025.png)
 
 ---
 
