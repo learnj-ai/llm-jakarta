@@ -23,6 +23,11 @@ public class BookRepository implements Serializable {
                 .getResultList();
     }
 
+    public List<String> findAllCategories() {
+        return entityManager.createQuery("select DISTINCT b.category from Book b", String.class)
+                .getResultList();
+    }
+
     public Optional<Book> findByIsbn(String isbn) {
         return Optional.ofNullable(entityManager.find(Book.class, isbn));
     }

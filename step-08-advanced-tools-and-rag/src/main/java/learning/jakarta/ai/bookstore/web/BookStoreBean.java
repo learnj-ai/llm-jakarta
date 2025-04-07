@@ -40,6 +40,9 @@ public class BookStoreBean implements Serializable {
     private List<Book> books;
 
     @Getter
+    private List<String> categories;
+
+    @Getter
     @Setter
     private String searchQuery;
 
@@ -136,6 +139,7 @@ public class BookStoreBean implements Serializable {
 
         loadCartFromCookie();
 
+        categories = bookStoreService.findAllCategories();
         // Load initial book list
         showAllBooks();
     }

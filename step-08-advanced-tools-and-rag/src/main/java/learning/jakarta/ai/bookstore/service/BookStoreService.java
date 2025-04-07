@@ -26,6 +26,10 @@ public class BookStoreService implements Serializable {
     @Inject
     private BookUpdateWebSocket bookUpdateWebSocket;
 
+    public List<String> findAllCategories() {
+        return bookRepository.findAllCategories();
+    }
+
     @Tool(name = "allBooks", value = "Get all available books")
     public List<Book> getAllBooks() {
         log.info("Getting all books");

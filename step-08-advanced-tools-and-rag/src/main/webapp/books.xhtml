@@ -98,18 +98,15 @@
                                 <f:ajax render="bookList"/>
                             </h:commandLink>
                         </li>
-                        <li>
-                            <h:commandLink value="Programming" 
-                                         action="#{bookStoreBean.filterByCategory('Programming')}">
-                                <f:ajax render="bookList"/>
-                            </h:commandLink>
-                        </li>
-                        <li>
-                            <h:commandLink value="Jakarta EE"
-                                           action="#{bookStoreBean.filterByCategory('Jakarta EE')}">
-                                <f:ajax render="bookList"/>
-                            </h:commandLink>
-                        </li>
+
+                        <ui:repeat value="#{bookStoreBean.categories}" var="category">
+                            <li>
+                                <h:commandLink value="#{category}"
+                                               action="#{bookStoreBean.filterByCategory(category)}">
+                                    <f:ajax render="bookList"/>
+                                </h:commandLink>
+                            </li>
+                        </ui:repeat>
                     </ul>
                 </h:form>
             </aside>
