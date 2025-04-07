@@ -22,6 +22,9 @@
         <compiler-plugin.version>3.13.0</compiler-plugin.version>
         <war-plugin.version>3.4.0</war-plugin.version>
         <wildfly-plugin.version>5.0.1.Final</wildfly-plugin.version>
+        <version.arquillian>1.7.2.Final</version.arquillian>
+        <version.arquillian.wildfly>5.0.1.Final</version.arquillian.wildfly>
+        <wildfly.home>${project.build.directory}/wildfly-${wildfly.version}</wildfly.home>
     </properties>
 
     <dependencies>
@@ -101,6 +104,20 @@
             <version>3.25.3</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- JBoss Logging -->
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+            <version>3.5.3.Final</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logmanager</groupId>
+            <artifactId>jboss-logmanager</artifactId>
+            <version>3.0.4.Final</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -127,9 +144,9 @@
                 <configuration>
                     <version>${wildfly.version}</version>
                     <server-config>standalone-full.xml</server-config>
-                    <debug>true</debug>
-                    <debugPort>8787</debugPort>
-                    <debugSuspend>false</debugSuspend>
+                    <scripts>
+                        <script>scripts/configure-postgresql.cli</script>
+                    </scripts>
                 </configuration>
             </plugin>
         </plugins>
