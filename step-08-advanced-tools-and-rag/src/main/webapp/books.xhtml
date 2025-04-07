@@ -117,7 +117,7 @@
             <h:panelGroup id="bookList" layout="block" styleClass="book-grid">
                 <ui:repeat value="#{bookStoreBean.books}" var="book">
                     <h:panelGroup layout="block" styleClass="book-card">
-                        <h:graphicImage value="/resources/#{book.imageUrl}"
+                        <h:graphicImage value="/resources/#{book.getImageUrl()}"
                                       alt="#{book.title}" 
                                       styleClass="book-cover"/>
                         <h:panelGroup layout="block" styleClass="book-info">
