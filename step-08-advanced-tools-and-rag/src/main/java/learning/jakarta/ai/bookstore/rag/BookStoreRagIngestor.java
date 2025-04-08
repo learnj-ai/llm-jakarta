@@ -21,7 +21,6 @@ import lombok.extern.java.Log;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,51 +40,48 @@ public class BookStoreRagIngestor {
     @Produces
     private InMemoryEmbeddingStore embeddingStore = new InMemoryEmbeddingStore<>();
 
-    private File docsFolder = new File("../docs-for-rag");
+    private final File docsFolder = new File("../docs-for-rag");
 
     private List<Document> loadDocs() {
         List<Document> documents = new ArrayList<>();
 
-        // Load RAG documents
         documents.addAll(loadDocuments(docsFolder.getPath(), new TextDocumentParser()));
-
-        // Add book information as documents
         documents.addAll(createBookDocuments());
 
         return documents;
     }
 
     private List<Document> createBookDocuments() {
-        List<Document> documents = new ArrayList<>();
-        List<Book> books = bookStoreService.getAllBooks();
+        List<Book> bookEntities = bookStoreService.getAllBooks();
 
-        for (Book book : books) {
-            // Create a rich text document from book details
-            String bookContent = String.format("""
-                    Title: %s
-                    Author: %s
-                    Category: %s
-                    Description: %s
-                    Price: $%.2f
-                    ISBN: %s
-                    """,
-                book.getTitle(),
-                book.getAuthor(),
-                book.getCategory(),
-                book.getDescription(),
-                book.getPrice(),
-                book.getIsbn()
-            );
+        return bookEntities.stream()
+                .map(book -> {
+                    String bookContent = String.format("""
+                                    Title: %s
+                                    Author: %s
+                                    Category: %s
+                                    Description: %s
+                                    Price: $%.2f
+                                    ISBN: %s
+                                    """,
+                            book.getTitle(),
+                            book.getAuthor(),
+                            book.getCategory(),
+                            book.getDescription() != null ? book.getDescription() : "No description available",
+                            book.getPrice(),
+                            book.getIsbn()
+                    );
 
-            Map<String, String> metadataMap = new HashMap<>();
-            metadataMap.put("isbn", book.getIsbn());
-            metadataMap.put("title", book.getTitle());
-            metadataMap.put("category", book.getCategory());
-
-            documents.add(Document.from(bookContent, Metadata.from(metadataMap)));
-        }
-
-        return documents;
+                    return Document.from(
+                            bookContent,
+                            Metadata.from(Map.of(
+                                    "isbn", book.getIsbn(),
+                                    "title", book.getTitle(),
+                                    "category", book.getCategory()
+                            ))
+                    );
+                })
+                .toList();
     }
 
     @PostConstruct

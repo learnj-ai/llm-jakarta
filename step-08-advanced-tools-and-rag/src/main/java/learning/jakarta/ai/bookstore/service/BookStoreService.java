@@ -26,6 +26,7 @@ public class BookStoreService implements Serializable {
     @Inject
     private BookUpdateWebSocket bookUpdateWebSocket;
 
+    @Tool(name = "allCategories", value = "Lists all distinct book categories available, useful for filtering or Browse books.")
     public List<String> findAllCategories() {
         return bookRepository.findAllCategories();
     }
@@ -39,34 +40,25 @@ public class BookStoreService implements Serializable {
     @Tool("Search books by category. Parameter: category (string)")
     public List<Book> searchByCategory(String category) {
         log.info("Searching books in category: {}", category);
-        List<Book> books = bookRepository.findAll()
-            .stream()
-            .filter(book -> book.getCategory().equalsIgnoreCase(category))
-            .toList();
-        log.info("Books found: {}", books);
-        return books;
+        List<Book> bookEntities = bookRepository.findByCategory(category);
+        log.info("Books found: {}", bookEntities);
+        return bookEntities;
     }
 
     @Tool("Search books by title or author. Parameter: query (string)")
     public List<Book> searchBooks(String query) {
         log.info("Searching books with query: {}", query);
-        return bookRepository.findAll()
-            .stream()
-            .peek(book -> log.info("Checking book: {}", book))
-            .filter(book ->
-                book.getTitle().toLowerCase().contains(query.toLowerCase()) ||
-                book.getAuthor().toLowerCase().contains(query.toLowerCase()))
-            .toList();
+        List<Book> books = bookRepository.findByTitleContainingIgnoreCaseOrAuthorContainingIgnoreCase(query, query);
+        log.info("Books found: {}", books);
+        return books;
     }
+
 
     @Tool("Get book details by ISBN. Parameter: isbn (string)")
     public Book getBookByIsbn(String isbn) {
         log.info("Getting book details for ISBN: {}", isbn);
-        return bookRepository.findAll()
-            .stream()
-            .filter(book -> book.getIsbn().equalsIgnoreCase(isbn))
-            .findAny()
-            .orElseThrow(() -> new IllegalArgumentException("Book not found with ISBN: " + isbn));
+        return bookRepository.findByIsbn(isbn)
+                .orElseThrow(() -> new IllegalArgumentException("Book not found with ISBN: " + isbn));
     }
 
     @Tool("Create or get shopping cart. Parameter: userId (string)")
@@ -119,13 +111,14 @@ public class BookStoreService implements Serializable {
     @Tool("Get book recommendations based on category. Parameter: category (string)")
     public List<Book> getRecommendations(String category) {
         log.info("Getting recommendations for category: {}", category);
-        List<Book> books = bookRepository.findAll().stream()
-            .filter(book -> book.getCategory().equalsIgnoreCase(category))
-            .limit(3)
-            .toList();
+        List<Book> bookEntities = bookRepository.findByCategory(category)
+                .stream()
+                .filter(book -> book.getCategory().equalsIgnoreCase(category))
+                .limit(3)
+                .toList();
 
-        log.info("Recommendations: {}", books);
-        return books;
+        log.info("Recommendations: {}", bookEntities);
+        return bookEntities;
     }
 
     @Tool("Get cart summary. Parameter: userId (string)")

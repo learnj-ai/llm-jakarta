@@ -40,7 +40,7 @@
             <div class="search-bar">
                 <h:form>
                     <h:inputText value="#{bookStoreBean.searchQuery}" 
-                               placeholder="Search books..."
+                               placeholder="Search bookEntities..."
                                styleClass="search-input"/>
                     <h:commandButton value="Search" 
                                    action="#{bookStoreBean.searchBooks}"
@@ -112,10 +112,10 @@
             </aside>
 
             <h:panelGroup id="bookList" layout="block" styleClass="book-grid">
-                <ui:repeat value="#{bookStoreBean.books}" var="book">
+                <ui:repeat value="#{bookStoreBean.bookEntities}" var="book">
                     <h:panelGroup layout="block" styleClass="book-card">
                         <h:graphicImage value="/resources/#{book.getImageUrl()}"
-                                      alt="#{book.title}" 
+                                      alt="#{book.title}"
                                       styleClass="book-cover"/>
                         <h:panelGroup layout="block" styleClass="book-info">
                             <h:outputText value="#{book.title}" styleClass="h3"/>

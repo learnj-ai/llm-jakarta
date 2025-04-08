@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.ArrayList;
 import java.net.URLEncoder;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -37,7 +36,7 @@ public class BookStoreBean implements Serializable {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Getter
-    private List<Book> books;
+    private List<Book> bookEntities;
 
     @Getter
     private List<String> categories;
@@ -145,19 +144,19 @@ public class BookStoreBean implements Serializable {
     }
 
     public void showAllBooks() {
-        books = bookStoreService.getAllBooks();
+        bookEntities = bookStoreService.getAllBooks();
     }
 
     public void searchBooks() {
         if (searchQuery != null && !searchQuery.trim().isEmpty()) {
-            books = bookStoreService.searchBooks(searchQuery);
+            bookEntities = bookStoreService.searchBooks(searchQuery);
         } else {
             showAllBooks();
         }
     }
 
     public void filterByCategory(String category) {
-        books = bookStoreService.searchByCategory(category);
+        bookEntities = bookStoreService.searchByCategory(category);
     }
 
     public void addToCart(String isbn) {
@@ -167,7 +166,7 @@ public class BookStoreBean implements Serializable {
 
         try {
             bookStoreService.addToCart(userId, isbn, 1);
-            books = bookStoreService.getAllBooks();
+            bookEntities = bookStoreService.getAllBooks();
             currentCart = bookStoreService.getOrCreateCart(userId); // Refresh cart
             saveCartToCookie(); // Save updated cart to cookie
         } catch (IllegalArgumentException e) {
@@ -195,7 +194,7 @@ public class BookStoreBean implements Serializable {
     }
 
     public void refreshBooks() {
-        books = bookStoreService.getAllBooks();
+        bookEntities = bookStoreService.getAllBooks();
         if (userId != null) {
             currentCart = bookStoreService.getOrCreateCart(userId);
         }

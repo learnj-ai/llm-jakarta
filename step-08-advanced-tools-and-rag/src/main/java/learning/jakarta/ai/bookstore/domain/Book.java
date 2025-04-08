@@ -1,13 +1,12 @@
 package learning.jakarta.ai.bookstore.domain;
 
+import com.opencsv.bean.CsvBindByName;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Random;
 
 @Entity
@@ -18,41 +17,35 @@ import java.util.Random;
 @Builder
 public class Book {
     @Id
+    @CsvBindByName
     private String isbn;
 
+    @CsvBindByName
     @Column(nullable = false)
     private String title;
 
+    @CsvBindByName
     @Column(nullable = false)
     private String author;
 
+    @CsvBindByName
     @Column(length = 2000)
     private String description;
 
+    @CsvBindByName
     @Column(nullable = false)
     private double price;
 
+    @CsvBindByName
     @Column(nullable = false)
     private int stockQuantity;
 
+    @CsvBindByName
     @Column(nullable = false)
     private String category;
 
+    @CsvBindByName
     private String imageUrl;
-
-    private Instant createdDate;
-    private Instant lastUpdatedDate;
-
-    @PrePersist
-    protected void onCreate() {
-        createdDate = Instant.now();
-        lastUpdatedDate = Instant.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        lastUpdatedDate = Instant.now();
-    }
 
     static String[] defaultImages = {
             "/images/default.png",

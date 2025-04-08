@@ -14,6 +14,14 @@ public class Cart {
     private double total;
 
     public void addItem(Book book, int quantity) {
+        for (CartItem item : items) {
+            if (item.getBook().getIsbn().equals(book.getIsbn())) {
+                item.setQuantity(item.getQuantity() + quantity);
+                calculateTotal();
+                return;
+            }
+        }
+
         items.add(new CartItem(book, quantity));
         calculateTotal();
     }
