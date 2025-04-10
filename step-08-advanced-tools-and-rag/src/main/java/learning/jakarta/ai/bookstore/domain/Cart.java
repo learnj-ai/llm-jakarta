@@ -3,6 +3,7 @@ package learning.jakarta.ai.bookstore.domain;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class Cart {
 
     private void calculateTotal() {
         total = items.stream()
-                .mapToDouble(item -> item.getBook().getPrice() * item.getQuantity())
+                .mapToDouble(item -> item.getBook().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())).doubleValue())
                 .sum();
     }
 }

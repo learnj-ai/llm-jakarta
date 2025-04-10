@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.Random;
 
 @Entity
@@ -17,34 +18,39 @@ import java.util.Random;
 @Builder
 public class Book {
     @Id
+    @Column(name = "id")
+    private Long id;
+
     @CsvBindByName
+    @Column(name = "isbn", unique = true, nullable = false, length = 20)
     private String isbn;
 
     @CsvBindByName
-    @Column(nullable = false)
+    @Column(name = "title", nullable = false, length = 255)
     private String title;
 
     @CsvBindByName
-    @Column(nullable = false)
+    @Column(name = "author", nullable = false, length = 255)
     private String author;
 
     @CsvBindByName
-    @Column(length = 2000)
+    @Column(name = "description", length = 2000)
     private String description;
 
     @CsvBindByName
-    @Column(nullable = false)
-    private double price;
+    @Column(name = "price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;
 
     @CsvBindByName
-    @Column(nullable = false)
+    @Column(name = "stock_quantity", nullable = false)
     private int stockQuantity;
 
     @CsvBindByName
-    @Column(nullable = false)
+    @Column(name = "category", nullable = false, length = 100)
     private String category;
 
     @CsvBindByName
+    @Column(name = "image_url", length = 500)
     private String imageUrl;
 
     static String[] defaultImages = {

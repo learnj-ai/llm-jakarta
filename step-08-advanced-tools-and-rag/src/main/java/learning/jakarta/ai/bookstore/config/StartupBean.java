@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Singleton
 @Startup
@@ -38,7 +39,11 @@ public class StartupBean {
                         .build()
                         .parse();
 
-                bookRepository.saveAll(books);
+                AtomicLong idGenerator = new AtomicLong(1);
+                List<Book> list = books.stream().peek(
+                        book -> book.setId(idGenerator.incrementAndGet())
+                ).toList();
+                bookRepository.saveAll(list);
             } catch (Exception e) {
                 log.error("Error initializing default books", e);
             }

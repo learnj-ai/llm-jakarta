@@ -53,7 +53,6 @@ public class BookStoreService implements Serializable {
         return books;
     }
 
-
     @Tool("Get book details by ISBN. Parameter: isbn (string)")
     public Book getBookByIsbn(String isbn) {
         log.info("Getting book details for ISBN: {}", isbn);

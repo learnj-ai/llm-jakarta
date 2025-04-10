@@ -6,6 +6,8 @@ import learning.jakarta.ai.bookstore.domain.CartItem;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @NoArgsConstructor
 public class CartSession {
@@ -31,7 +33,7 @@ public class CartSession {
                 book.getTitle(),
                 book.getAuthor(),
                 item.getQuantity(),
-                book.getPrice() * item.getQuantity()));
+                book.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()))));
         }
         summary.append(String.format("\nTotal: $%.2f", cart.getTotal()));
         return summary.toString();
