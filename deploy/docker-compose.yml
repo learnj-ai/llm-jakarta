@@ -1,8 +1,6 @@
-# Use postgres/example user/password credentials
-version: '3.9'
-
+# Main docker-compose file for all projects
 services:
-
+  # PostgreSQL database service
   db:
     image: pgvector/pgvector:pg16
     restart: always
@@ -20,9 +18,125 @@ services:
       POSTGRES_PASSWORD: llmjakarta
       POSTGRES_USER: llmjakarta
       POSTGRES_DB: llmjakarta
+    networks:
+      - llm-jakarta-network
 
+  # Database management tool
   adminer:
     image: adminer
     restart: always
     ports:
       - 9000:8080
+    networks:
+      - llm-jakarta-network
+    depends_on:
+      - db
+
+  # Step 00
+  llm-jakarta-step-00:
+    extends:
+      file: ./docker-compose-step-00.yml
+      service: llm-jakarta-step-00
+    networks:
+      - llm-jakarta-network
+
+  # Step 01
+  llm-jakarta-step-01:
+    extends:
+      file: ./docker-compose-step-01.yml
+      service: llm-jakarta-step-01
+    networks:
+      - llm-jakarta-network
+
+  # Step 02
+  llm-jakarta-step-02:
+    extends:
+      file: ./docker-compose-step-02.yml
+      service: llm-jakarta-step-02
+    networks:
+      - llm-jakarta-network
+
+  # Step 03
+  llm-jakarta-step-03:
+    extends:
+      file: ./docker-compose-step-03.yml
+      service: llm-jakarta-step-03
+    networks:
+      - llm-jakarta-network
+
+  # Step 04
+  llm-jakarta-step-04:
+    extends:
+      file: ./docker-compose-step-04.yml
+      service: llm-jakarta-step-04
+    networks:
+      - llm-jakarta-network
+
+  # Step 05
+  llm-jakarta-step-05:
+    extends:
+      file: ./docker-compose-step-05.yml
+      service: llm-jakarta-step-05
+    networks:
+      - llm-jakarta-network
+
+  # Step 06
+  llm-jakarta-step-06:
+    extends:
+      file: ./docker-compose-step-06.yml
+      service: llm-jakarta-step-06
+    networks:
+      - llm-jakarta-network
+
+  # Step 07
+  llm-jakarta-step-07:
+    extends:
+      file: ./docker-compose-step-07.yml
+      service: llm-jakarta-step-07
+    networks:
+      - llm-jakarta-network
+
+  # Step 08
+  llm-jakarta-step-08:
+    extends:
+      file: ./docker-compose-step-08.yml
+      service: llm-jakarta-step-08
+    networks:
+      - llm-jakarta-network
+##
+#  # Step 09 - MCP Rest Backend
+#  step-09-rest-backend:
+#    extends:
+#      file: ./docker-compose-step-09.yml
+#      service: rest-backend
+#    networks:
+#      - llm-jakarta-network
+#    depends_on:
+#      - db
+#
+#  # Step 09 - MCP Server
+#  step-09-server:
+#    extends:
+#      file: ./docker-compose-step-09.yml
+#      service: server
+#    networks:
+#      - llm-jakarta-network
+#    depends_on:
+#      - step-09-rest-backend
+
+networks:
+  llm-jakarta-network:
+    driver: bridge
+
+volumes:
+  logs-step-00: {}
+  logs-step-01: {}
+  logs-step-02: {}
+  logs-step-03: {}
+  logs-step-04: {}
+  logs-step-05: {}
+  logs-step-06: {}
+  logs-step-07: {}
+  logs-step-08: {}
+  rest-logs: {}
+  server-logs: {}

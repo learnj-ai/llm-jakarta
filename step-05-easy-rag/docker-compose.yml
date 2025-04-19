@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  llm-jakarta:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8805:8080"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-your-api-key}
+      - JAVA_OPTS=-Xms512m -Xmx1024m
+    volumes:
+      - logs:/opt/jboss/wildfly/standalone/log
+      - ./docker-data/deployments:/opt/jboss/wildfly/standalone/deployments
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/llm-jakarta/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s   # Give the container time to start before first health‑check
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'      # Use '1.0' for clarity
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    networks:
+      - llm-jakarta-network
+
+networks:
+  llm-jakarta-network:
+    driver: bridge   # Default bridge network is usually sufficient
+
+volumes:
+  logs: {}           # Define the named volume for logs

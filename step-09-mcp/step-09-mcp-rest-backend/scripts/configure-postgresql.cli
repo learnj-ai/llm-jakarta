@@ -6,6 +6,6 @@ module add --name=org.postgresql --resources=libs/postgresql-42.7.3.jar --depend
 
 reload
 
-data-source add --name=LLMJakartaPostgresDS --jndi-name=java:jboss/datasources/LLMJakartaPostgresDS --driver-name=postgres --connection-url=jdbc:postgresql://localhost:5435/llmjakarta --user-name=llmjakarta --password=llmjakarta
+data-source add --name=LLMJakartaPostgresDS --jndi-name=java:jboss/datasources/LLMJakartaPostgresDS --driver-name=postgres --connection-url=jdbc:postgresql://localhost:5432/llmjakarta --user-name=llmjakarta --password=llmjakarta
 
 reload
