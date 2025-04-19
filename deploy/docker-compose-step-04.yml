@@ -9,10 +9,12 @@ services:
       - "8804:8080"
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-your-api-key}
+      - LLM_JAKARTA_DOCUMENTS_DIR=/opt/app/documents
       - JAVA_OPTS=-Xms512m -Xmx1024m
     volumes:
       - logs-step-04:/opt/jboss/wildfly/standalone/log
       - ../step-04-inmemory-rag/docker-data/deployments:/opt/jboss/wildfly/standalone/deployments
+      - ${LLM_JAKARTA_DOCUMENTS_DIR:-./documents}:/opt/app/documents
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/llm-jakarta/ || exit 1"]

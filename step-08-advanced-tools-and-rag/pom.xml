@@ -120,6 +120,8 @@
                 <groupId>org.wildfly.plugins</groupId>
                 <artifactId>wildfly-maven-plugin</artifactId>
                 <configuration>
+                    <version>${wildfly.version}</version>
+                    <server-config>standalone-full.xml</server-config>
                     <scripts>
                         <script>scripts/configure-postgresql.cli</script>
                     </scripts>
