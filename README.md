@@ -25,6 +25,7 @@ The project is organized into progressive steps, each building upon the previous
 7. **step-06-advanced-rag**: Advanced RAG features with better context handling
 8. **step-07-multi-model**: Support for multiple LLM models
 9. **step-08-advanced-tools-and-rag**: Combined advanced tools with RAG capabilities
+10. **step-09-mcp**: Introduction to Model Context Protocol (MCP)
 
 ---
 
@@ -93,19 +94,19 @@ Replace `<document_dir>` with the path to your documents directory.
 ## Screenshots
 
 ### Welcome Page
-![Welcome Page](images/welcome-2025.png)
+![Welcome Page](assets/images/welcome-2025.png)
 
 ### Chat Interface
-![Chat Interface](images/chatbot-2025.png)
+![Chat Interface](assets/images/chatbot-2025.png)
 
 ### Configuration Interface
-![Configuration Interface](images/config-2025.png)
+![Configuration Interface](assets/images/config-2025.png)
 
 ### Full Screen Chat View
-![Full Screen Chat](images/fullscreen-2025.png)
+![Full Screen Chat](assets/images/fullscreen-2025.png)
 
 ### Tool Integration Example
-![Tool Integration](images/tool-example-2025.png)
+![Tool Integration](assets/images/tool-example-2025.png)
 
 ---
 
@@ -144,6 +145,10 @@ Replace `<document_dir>` with the path to your documents directory.
 1. Combines RAG capabilities with tool integration
 2. Requires both document directory and tool configurations
 3. Provides the most comprehensive chatbot experience
+
+### Model Contenxt Protocol (Step 09)
+1. Implements an MCP server using a REST service backend.
+2. Uses [goose](https://github.com/block/goose) for MCP stdin
 
 ---
 
