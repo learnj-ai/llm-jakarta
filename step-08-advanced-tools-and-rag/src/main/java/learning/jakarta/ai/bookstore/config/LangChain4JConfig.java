@@ -45,4 +45,18 @@ public class LangChain4JConfig {
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.max-memory-size")
     private int maxMemorySize;
+
+
+    //Google API Configuration
+    @Inject
+    @ConfigProperty(name = "langchain4j.google.api-key")
+    private String googleApiKey;
+
+    @Inject
+    @ConfigProperty(name = "langchain4j.google.base-url", defaultValue = "https://generativelanguage.googleapis.com/v1beta/openai/")
+    private String googleBaseUrl;
+
+    @Inject
+    @ConfigProperty(name = "langchain4j.google.chat-model.model-name", defaultValue = "gpt-3.5-turbo")
+    private String googleChatModelName;
 }
