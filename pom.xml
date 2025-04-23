@@ -24,6 +24,7 @@
         <module>step-07-multi-model</module>
         <module>step-08-advanced-tools-and-rag</module>
         <module>step-09-mcp</module>
+        <module>step-10-mcp-client</module>
     </modules>
 
     <properties>
@@ -111,6 +112,12 @@
             <dependency>
                 <groupId>dev.langchain4j</groupId>
                 <artifactId>langchain4j-open-ai</artifactId>
+                <version>${langchain4j.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.langchain4j</groupId>
+                <artifactId>langchain4j-mcp</artifactId>
                 <version>${langchain4j.version}</version>
             </dependency>
             <dependency>

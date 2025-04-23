@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+<h:head>
+    <title>Welcome to Jakarta EE Chatbot</title>
+    <link rel="icon" type="image/jpeg" href="#{request.contextPath}/resources/images/jakartaee.jpg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&amp;family=Fira+Code:wght@400;500&amp;display=swap" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+
+    <link rel="stylesheet" href="#{request.contextPath}/resources/css/chat-enhanced.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/xml.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/tokyo-night-dark.min.css" rel="stylesheet" />
+    <script src="#{request.contextPath}/resources/js/chat.js"></script>
+    <script>
+        function toggleConfig() {
+            const configPanel = document.getElementById("main-config-panel");
+            const configButton = document.querySelector(".settings-button i");
+            const successMessage = document.getElementById("main-successMessage");
+            const mainContent = document.querySelector(".main-page-content");
+            const backdrop = document.getElementById("config-backdrop");
+            const body = document.body;
+
+            if (configPanel.style.display === "none") {
+                // Show config panel and backdrop
+                configPanel.style.display = "block";
+                backdrop.classList.add("visible");
+                body.style.overflow = "hidden";
+
+                // Allow DOM to update before starting transition
+                requestAnimationFrame(() => {
+                    mainContent.classList.add("with-config");
+                    configButton.classList.add("fa-spin");
+                });
+
+                // Hide any previous success message
+                if (successMessage) {
+                    successMessage.style.display = "none";
+                }
+            } else {
+                // Start transition
+                mainContent.classList.remove("with-config");
+                configButton.classList.remove("fa-spin");
+                backdrop.classList.remove("visible");
+                body.style.overflow = "";
+
+                // Wait for transition to complete before hiding
+                setTimeout(() => {
+                    configPanel.style.display = "none";
+                }, 300); // Match transition duration
+            }
+        }
+
+        function showConfigSuccess() {
+            const successMessage = document.getElementById("main-successMessage");
+            if (successMessage) {
+                successMessage.style.display = "block";
+                setTimeout(() => {
+                    successMessage.style.display = "none";
+                }, 3000);
+            }
+        }
+
+        function showLoading() {
+            const loading = document.getElementById("main-configLoading");
+            const submitButton = document.querySelector(".btn-submit");
+            if (loading &amp;&amp; submitButton) {
+                loading.style.display = "flex";
+                submitButton.disabled = true;
+            }
+        }
+
+        function hideLoading() {
+            const loading = document.getElementById("main-configLoading");
+            const submitButton = document.querySelector(".btn-submit");
+            if (loading &amp;&amp; submitButton) {
+                loading.style.display = "none";
+                submitButton.disabled = false;
+            }
+        }
+
+        function handleConfigUpdate(data) {
+            if (data.status === 'complete') {
+                hideLoading();
+                showConfigSuccess();
+            }
+        }
+
+        function toggleChat() {
+            const chatContainer = document.getElementById("chat-container");
+            const isOpening = getComputedStyle(chatContainer).display === "none";
+
+            if (isOpening) {
+                chatContainer.style.display = "flex";
+
+                // Initialize WebSocket connection
+                initializeSocket()
+                    .then(() => {
+                        showWelcomeMessage();
+                    })
+                    .catch((error) => {
+                        console.error("Socket initialization failed:", error);
+                        showErrorBubble("Unable to connect. Please try again.");
+                    });
+            } else {
+                chatContainer.style.display = "none";
+                // Clean up WebSocket if chat is closed
+                if (socket) {
+                    socket.close();
+                    cleanupWebSocket();
+                    socket = null;
+                }
+                // Clear any error messages
+                const errorBubble = document.getElementById("error-bubble");
+                if (errorBubble) {
+                    errorBubble.style.display = "none";
+                }
+            }
+        }
+
+        function showWelcomeMessage() {
+            const chatWindow = document.getElementById("chat-window");
+            if (chatWindow.children.length === 0) {
+                const welcomeMessage = `Hi there! 👋 I'm your Jakarta EE AI assistant. I can help you with:
+* Learning about Jakarta EE technologies
+* Understanding best practices
+* Solving common problems
+* Finding relevant documentation
+
+Feel free to ask any questions!`;
+
+                setTimeout(() => {
+                    addMessage(welcomeMessage, "bot");
+                }, 100);
+            }
+        }
+
+        function toggleFullScreen() {
+            const chatContainer = document.getElementById("chat-container");
+            const fullscreenButton = document.querySelector('.chat-fullscreen i');
+            const chatIcon = document.querySelector('.chat-icon');
+            const configPanel = document.getElementById("main-config-panel");
+
+            // Hide config panel when entering fullscreen
+            if (configPanel &amp;&amp; configPanel.style.display !== "none") {
+                toggleConfig();
+            }
+
+            chatContainer.classList.toggle("fullscreen");
+
+            if (chatContainer.classList.contains("fullscreen")) {
+                fullscreenButton.classList.remove("fa-expand");
+                fullscreenButton.classList.add("fa-compress");
+                chatIcon.style.display = 'none';
+
+                // Focus input when going fullscreen
+                setTimeout(() => {
+                    document.getElementById('message-input').focus();
+                }, 100);
+            } else {
+                fullscreenButton.classList.remove("fa-compress");
+                fullscreenButton.classList.add("fa-expand");
+                chatIcon.style.display = 'flex';
+            }
+
+            // Scroll to bottom after layout changes
+            setTimeout(() => {
+                const chatWindow = document.getElementById('chat-window');
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }, 150);
+        }
+
+        window.onload = function () {
+            const messageInput = document.getElementById("message-input");
+            messageInput.addEventListener("keypress", function (event) {
+                if (event.key === "Enter") {
+                    sendMessage(); // Send message when "Enter" is pressed
+                    event.preventDefault(); // Prevent default form submission
+                }
+            });
+        };
+
+        // Handle Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const configPanel = document.getElementById("main-config-panel");
+                if (configPanel.style.display !== "none") {
+                    toggleConfig();
+                }
+            }
+        });
+
+        // Font size adjustment
+        let currentFontSize = 1.0; // Default font size multiplier
+        const fontSizeStep = 0.1; // Step to increase/decrease font size
+        const minFontSize = 0.7; // Minimum font size multiplier
+        const maxFontSize = 1.5; // Maximum font size multiplier
+
+        function changeFontSize(action) {
+            if (action === 'increase' &amp;&amp; currentFontSize &lt; maxFontSize) {
+                currentFontSize += fontSizeStep;
+            } else if (action === 'decrease' &amp;&amp; currentFontSize &gt; minFontSize) {
+                currentFontSize -= fontSizeStep;
+            }
+
+            // Apply the font size to the chat window and messages
+            document.documentElement.style.setProperty('--font-size-multiplier', currentFontSize);
+
+            // Update the chat window scroll position
+            const chatWindow = document.getElementById('chat-window');
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+    </script>
+</h:head>
+<h:body>
+    <!-- Main Page Welcome Message -->
+    <div class="main-page-content">
+        <img src="#{request.contextPath}/resources/images/jakartaee_logo.jpg" alt="Jakarta EE Logo"/>
+        <h1>Welcome to Jakarta EE AI Chatbot</h1>
+        <p>
+            This chatbot is here to help you learn about Jakarta EE technologies, answer your questions,
+            and provide guidance on how to get started. Feel free to click the chatbot icon at the bottom
+            of the page to start a conversation!
+        </p>
+        <button class="settings-button" onclick="toggleConfig()" title="Configuration">
+            <i class="fas fa-cog"></i> Configure AI Settings
+        </button>
+    </div>
+
+    <!-- Configuration Panel -->
+    <div id="config-backdrop" class="config-backdrop" onclick="toggleConfig()"></div>
+    <div id="main-config-panel" class="config-panel" style="display: none;">
+        <div class="config-header">
+            <h3>LangChain Configuration</h3>
+            <button type="button" class="config-close" onclick="toggleConfig()" title="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <h:form styleClass="config-form">
+            <f:event type="preRenderView" listener="#{configurationBean.init}"/>
+            <div class="form-group">
+                <h:outputLabel for="main-apiKey" value="API Key:"/>
+                <h:inputSecret id="main-apiKey" value="#{configurationBean.apiKey}" 
+                             required="true" redisplay="true"
+                             styleClass="config-input"/>
+            </div>
+
+            <div class="form-group">
+                <h:outputLabel for="main-modelName" value="Model Name:"/>
+                <h:selectOneMenu id="main-modelName" value="#{configurationBean.modelName}" 
+                           styleClass="config-input">
+                    <f:selectItems value="#{configurationBean.allowedModels}" var="model"
+                                 itemValue="#{model}" itemLabel="#{model}"/>
+                </h:selectOneMenu>
+            </div>
+
+            <div class="form-group">
+                <h:outputLabel for="main-temperature" value="Temperature:"/>
+                <h:inputText id="main-temperature" value="#{configurationBean.temperature}" 
+                           required="true" styleClass="config-input">
+                    <f:convertNumber minFractionDigits="1" maxFractionDigits="2"/>
+                </h:inputText>
+            </div>
+
+            <div class="form-group">
+                <h:outputLabel for="main-topP" value="Top P:"/>
+                <h:inputText id="main-topP" value="#{configurationBean.topP}" 
+                           required="true" styleClass="config-input">
+                    <f:convertNumber minFractionDigits="1" maxFractionDigits="2"/>
+                </h:inputText>
+            </div>
+
+            <div class="form-group">
+                <h:outputLabel for="main-maxTokens" value="Max Tokens:"/>
+                <h:inputText id="main-maxTokens" value="#{configurationBean.maxTokens}" 
+                           required="true" styleClass="config-input">
+                    <f:convertNumber integerOnly="true"/>
+                </h:inputText>
+            </div>
+
+            <div class="form-group">
+                <h:outputLabel for="main-frequencyPenalty" value="Frequency Penalty:"/>
+                <h:inputText id="main-frequencyPenalty" value="#{configurationBean.frequencyPenalty}" 
+                           required="true" styleClass="config-input">
+                    <f:convertNumber minFractionDigits="1" maxFractionDigits="2"/>
+                </h:inputText>
+            </div>
+
+            <div class="form-group checkbox-group">
+                <h:selectBooleanCheckbox id="main-logRequests" value="#{configurationBean.logRequests}"/>
+                <h:outputLabel for="main-logRequests" value="Log Requests"/>
+            </div>
+
+            <div class="form-group checkbox-group">
+                <h:selectBooleanCheckbox id="main-logResponses" value="#{configurationBean.logResponses}"/>
+                <h:outputLabel for="main-logResponses" value="Log Responses"/>
+            </div>
+
+            <div class="form-actions">
+                <div class="button-container">
+                    <h:commandButton value="Update Configuration" 
+                                   action="#{configurationBean.updateConfiguration}" 
+                                   styleClass="btn-submit"
+                                   onclick="showLoading()">
+                        <f:ajax execute="@form" render="@form main-successMessage"
+                               onevent="handleConfigUpdate"/>
+                    </h:commandButton>
+
+                    <div id="main-configLoading" class="loading-indicator" style="display: none;">
+                        <div class="loading-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <h:outputText id="main-successMessage" value="Configuration updated successfully!" 
+                            styleClass="success-message"
+                            style="display: none;"/>
+            </div>
+        </h:form>
+    </div>
+    <!-- Chat Container -->
+    <div id="chat-container" class="chat-container" style="display: none;">
+        <div class="chat-header">
+            <img src="#{request.contextPath}/resources/images/jakartaee.jpg" alt="Jakarta EE Logo"
+                 class="jakarta-logo"/>
+            <div class="chat-header-content">
+                <h1 class="chat-title">Jakarta EE Assistant</h1>
+                <p class="chat-subtitle">Ask me anything about Jakarta EE!</p>
+            </div>
+            <div class="chat-controls">
+                <button class="font-size-decrease" onclick="changeFontSize('decrease')" title="Decrease font size">
+                    <i class="fas fa-font"></i><i class="fas fa-minus"></i>
+                </button>
+                <button class="font-size-increase" onclick="changeFontSize('increase')" title="Increase font size">
+                    <i class="fas fa-font"></i><i class="fas fa-plus"></i>
+                </button>
+                <button class="chat-minimize" onclick="toggleChat()" title="Minimize chat">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button class="chat-fullscreen" onclick="toggleFullScreen()" title="Toggle fullscreen">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="error-bubble" class="error-bubble" style="display: none;">
+            Unable to connect to the chatbot. Please try again later.
+        </div>
+
+        <div id="chat-window" class="chat-window"></div>
+        <div id="loading-indicator" class="loading-indicator" style="display: none;">
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+        <div class="chat-input-container">
+            <input id="message-input" class="chat-input" type="text" 
+                   placeholder="Type your message here... (Press Enter to send)"
+                   aria-label="Chat message input"/>
+            <button class="chat-send-button" onclick="sendMessage()" title="Send message">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Chatbot Icon -->
+    <button class="chat-icon" onclick="toggleChat()" title="Chat with AI Assistant">
+        <i class="fas fa-robot"></i>
+        <span class="notification-dot"></span>
+    </button>
+</h:body>
+</html>
