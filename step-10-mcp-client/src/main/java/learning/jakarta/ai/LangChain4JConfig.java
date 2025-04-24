@@ -17,17 +17,19 @@ public class LangChain4JConfig {
     @ConfigProperty(name = "langchain4j.open-ai.api-key")
     private String apiKey;
 
+    // Inject directly as List<String> - MicroProfile Config handles comma separation
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.allowed-models")
-    private String allowedModels;
+    private List<String> allowedModelsList;
 
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.model-name")
     private String modelName;
 
-    public List<String> getAllowedModelsList() {
-        return Arrays.asList(allowedModels.split(","));
-    }
+    // Removed the manual splitting method as injection handles it now
+    // public List<String> getAllowedModelsList() {
+    //     return Arrays.asList(allowedModels.split(","));
+    // }
 
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.temperature")
@@ -44,9 +46,11 @@ public class LangChain4JConfig {
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.max-tokens")
     private int maxTokens;
+
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.frequency-penalty")
     private double frequencyPenalty;
+
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.log-requests")
     private boolean logRequests;
@@ -55,4 +59,11 @@ public class LangChain4JConfig {
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.log-responses")
     private boolean logResponses;
 
+    @Inject
+    @ConfigProperty(name = "langchain4j.mcp.docker.command")
+    private List<String> dockerCommand;
+
+    @Inject
+    @ConfigProperty(name = "langchain4j.mcp.jar.command")
+    private List<String> jarCommand;
 }
