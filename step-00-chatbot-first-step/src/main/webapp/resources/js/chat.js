@@ -185,7 +185,7 @@ function sendMessageToSocket(message, input, sendButton) {
         showErrorBubble("No response from server. Please try again.");
         loadingIndicator.style.display = "none";
         cleanupWebSocket();
-    }, 30000); // 30 second timeout
+    }, 190000); // 60 second timeout
 
     // Store timeout ID to clear it when response is received
     socket.messageTimeout = messageTimeout;
