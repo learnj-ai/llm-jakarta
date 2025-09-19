@@ -1,11 +1,12 @@
 package learning.jakarta.ai;
 
+
 import dev.langchain4j.mcp.McpToolProvider;
 import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.stdio.StdioMcpTransport;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.service.AiServices;
 import jakarta.annotation.PostConstruct;
@@ -22,7 +23,7 @@ import java.util.function.Consumer;
 public class LangChainService {
 
 	private LangChain4JConfig config;
-	private ChatLanguageModel chatModel;
+	private ChatModel chatModel;
 	private Assistant assistant;
 	private McpToolProvider toolProvider;
 
@@ -40,7 +41,7 @@ public class LangChainService {
 		log.info("LangChainService initialized successfully.");
 	}
 
-	private ChatLanguageModel buildChatModel(LangChain4JConfig currentConfig) {
+	private ChatModel buildChatModel(LangChain4JConfig currentConfig) {
 		log.debug("Building OpenAI Chat Model with config: {}", currentConfig);
 		return OpenAiChatModel.builder()
 				.apiKey(currentConfig.getApiKey())
@@ -91,10 +92,10 @@ public class LangChainService {
 				.build();
 	}
 
-	private Assistant buildAssistant(ChatLanguageModel model, McpToolProvider provider) {
+	private Assistant buildAssistant(ChatModel model, McpToolProvider provider) {
 		log.debug("Building AI Assistant.");
 		return AiServices.builder(Assistant.class)
-				.chatLanguageModel(model)
+				.chatModel(model)
 				.toolProvider(provider)
 				.chatMemory(MessageWindowChatMemory.withMaxMessages(20))
 				.build();

@@ -61,7 +61,7 @@ public class LangChainService {
                     .build();
 
             promptInjectionDetectionService = AiServices.builder(PromptInjectionDetectionService.class)
-                    .chatLanguageModel(injectionDetectionModel)
+                    .chatModel(injectionDetectionModel)
                     .build();
         } catch (Exception e) {
             log.error("Failed to initialize PromptInjectionDetectionService. Injection checks will be skipped.", e);
@@ -103,7 +103,7 @@ public class LangChainService {
         bookStoreChatService = AiServices
                 .builder(BookStoreChatService.class)
                 .tools(bookStoreService)
-                .chatLanguageModel(chatModel)
+                .chatModel(chatModel)
                 .chatMemoryProvider(chatMemoryProvider)
                 .retrievalAugmentor(retrievalAugmentor)
                 .build();

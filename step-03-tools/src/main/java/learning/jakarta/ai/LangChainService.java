@@ -36,7 +36,7 @@ public class LangChainService {
 
         jakartaEEAgent = AiServices
                 .builder(JakartaEEAgent.class)
-                .streamingChatLanguageModel(chatModel)
+                .streamingChatModel(chatModel)
                 .tools(new JakartaEEProjectGeneratorTool(), new WebPageTool(), new JavaCompilerTool())
                 .chatMemory(MessageWindowChatMemory.builder().maxMessages(config.getMaxMemorySize()).build())
                 .build();
@@ -46,8 +46,8 @@ public class LangChainService {
         log.info("User {} message: {}", userId, message);
 
         jakartaEEAgent.chat(message)
-                .onNext(consumer::accept)
-                .onComplete((Response<AiMessage> response) -> consumer.accept("[END]"))
+                .onPartialResponse(consumer::accept)
+                .onCompleteResponse(chatResponse -> consumer.accept("[END]"))
                 .onError((Throwable throwable) -> {
                     log.error("Error processing message", throwable);
                     consumer.accept("Sorry, I am unable to process your message at this time. Please try again later.");
