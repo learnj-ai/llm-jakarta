@@ -28,8 +28,16 @@ public class LangChain4JConfig {
     private Duration timeout;
 
     @Inject
+    @ConfigProperty(name = "langchain4j.open-ai.chat-model.top-p")
+    private double topP;
+
+    @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.max-tokens")
-    private int maxTokens;
+    private int maxCompletionToken;
+
+    @Inject
+    @ConfigProperty(name = "langchain4j.open-ai.chat-model.allowed-models")
+    private String allowedModels;
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.frequency-penalty")
     private double frequencyPenalty;
@@ -44,5 +52,12 @@ public class LangChain4JConfig {
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.max-memory-size")
     private int maxMemorySize;
+
+    public java.util.List<String> getAllowedModelsList() {
+        return java.util.Arrays.asList(allowedModels.split(","))
+                .stream()
+                .map(String::trim)
+                .toList();
+    }
 }
 
