@@ -16,17 +16,7 @@ public class LangChainService {
 
     @Inject
     public LangChainService(LangChain4JConfig config) {
-        chatModel = OpenAiChatModel.builder()
-                .apiKey(config.getApiKey())
-                .modelName(config.getModelName())
-                .temperature(config.getTemperature())
-                .topP(config.getTopP())
-                .timeout(config.getTimeout())
-                .maxTokens(config.getMaxTokens())
-                .frequencyPenalty(config.getFrequencyPenalty())
-                .logRequests(config.isLogRequests())
-                .logResponses(config.isLogResponses())
-                .build();
+        chatModel = createModel(config);
     }
 
     public void sendMessage(String message, Consumer<String> consumer) {
@@ -36,17 +26,52 @@ public class LangChainService {
 
     public synchronized void updateConfiguration(LangChain4JConfig config) {
         log.info("Updating configuration with new settings : {}", config);
-        chatModel = OpenAiChatModel.builder()
+        chatModel = createModel(config);
+        log.info("Configuration updated successfully");
+    }
+
+    private static OpenAiChatModel createModel(LangChain4JConfig config) {
+        OpenAiChatModel.OpenAiChatModelBuilder builder = OpenAiChatModel.builder()
                 .apiKey(config.getApiKey())
-                .modelName(config.getModelName())
-                .temperature(config.getTemperature())
+                .modelName(config.getModelName());
+
+        String model = safeLower(config.getModelName());
+
+        // Controls that some model families don't accept
+        if (supportsTemperature(model)) {
+            builder.temperature(config.getTemperature());
+        }
+        if (supportsFrequencyPenalty(model)) {
+            builder.frequencyPenalty(config.getFrequencyPenalty());
+        }
+
+        return builder
                 .topP(config.getTopP())
                 .timeout(config.getTimeout())
-                .maxTokens(config.getMaxTokens())
-                .frequencyPenalty(config.getFrequencyPenalty())
+                .maxCompletionTokens(config.getMaxCompletionToken())
                 .logRequests(config.isLogRequests())
                 .logResponses(config.isLogResponses())
                 .build();
-        log.info("Configuration updated successfully");
     }
+
+    private static boolean supportsTemperature(String model) {
+        return !(isO1(model) || isGpt5(model));
+    }
+
+    private static boolean supportsFrequencyPenalty(String model) {
+        return !isGpt5(model);
+    }
+
+    private static boolean isO1(String model) {
+        return model.startsWith("o1-") || model.equals("o1");
+    }
+
+    private static boolean isGpt5(String model) {
+        return model.startsWith("gpt-5");
+    }
+
+    private static String safeLower(String s) {
+        return s == null ? "" : s.toLowerCase();
+    }
+
 }

@@ -5,7 +5,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 
@@ -34,7 +33,7 @@ public class ConfigurationBean {
         this.modelName = config.getModelName();
         this.temperature = config.getTemperature();
         this.topP = config.getTopP();
-        this.maxTokens = config.getMaxTokens();
+        this.maxTokens = config.getMaxCompletionToken();
         this.frequencyPenalty = config.getFrequencyPenalty();
         this.logRequests = config.isLogRequests();
         this.logResponses = config.isLogResponses();
@@ -53,7 +52,7 @@ public class ConfigurationBean {
         config.setModelName(modelName);
         config.setTemperature(temperature);
         config.setTopP(topP);
-        config.setMaxTokens(maxTokens);
+        config.setMaxCompletionToken(maxTokens);
         config.setFrequencyPenalty(frequencyPenalty);
         config.setLogRequests(logRequests);
         config.setLogResponses(logResponses);
