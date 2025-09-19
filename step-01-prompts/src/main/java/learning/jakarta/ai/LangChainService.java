@@ -32,13 +32,24 @@ public class LangChainService {
     LangChain4JConfig config;
 
     private OpenAiStreamingChatModel createChatModel(String modelName) {
-        return OpenAiStreamingChatModel.builder()
+        OpenAiStreamingChatModel.OpenAiStreamingChatModelBuilder builder = OpenAiStreamingChatModel.builder()
                 .apiKey(config.getApiKey())
-                .modelName(modelName)
-                .temperature(config.getTemperature())
+                .modelName(modelName);
+
+        String model = safeLower(modelName);
+
+        // Controls that some model families don't accept
+        if (supportsTemperature(model)) {
+            builder.temperature(config.getTemperature());
+        }
+        if (supportsFrequencyPenalty(model)) {
+            builder.frequencyPenalty(config.getFrequencyPenalty());
+        }
+
+        return builder
+                .topP(config.getTopP())
                 .timeout(config.getTimeout())
-                .maxTokens(config.getMaxTokens())
-                .frequencyPenalty(config.getFrequencyPenalty())
+                .maxCompletionTokens(config.getMaxCompletionToken())
                 .logRequests(config.isLogRequests())
                 .logResponses(config.isLogResponses())
                 .build();
@@ -80,15 +91,15 @@ public class LangChainService {
     }
 
     private <T extends Personality> T createPersonality(Class<T> clazz, OpenAiStreamingChatModel chatModel) {
-        return AiServices.builder(clazz).streamingChatLanguageModel(chatModel).build();
+        return AiServices.builder(clazz).streamingChatModel(chatModel).build();
     }
 
     public void sendMessage(String message, Consumer<String> consumer) {
         log.info("User message: {}", message);
 
         personality.getUserText(message)
-                .onNext(consumer)
-                .onComplete((Response<AiMessage> response) -> consumer.accept("[END]"))
+                .onPartialResponse(consumer)
+                .onCompleteResponse((Response<AiMessage> response) -> consumer.accept("[END]"))
                 .onError((Throwable throwable) -> {
                     log.error("Error processing message", throwable);
                     consumer.accept("Sorry, I am unable to process your message at this time. Please try again later.");
@@ -104,5 +115,25 @@ public class LangChainService {
             case TreeOfThought ignored -> TreeOfThought.SYSTEM_PROMPT;
             case CasualChat ignored -> CasualChat.SYSTEM_PROMPT;
         };
+    }
+
+    private static boolean supportsTemperature(String model) {
+        return !(isO1(model) || isGpt5(model));
+    }
+
+    private static boolean supportsFrequencyPenalty(String model) {
+        return !isGpt5(model);
+    }
+
+    private static boolean isO1(String model) {
+        return model.startsWith("o1-") || model.equals("o1");
+    }
+
+    private static boolean isGpt5(String model) {
+        return model.startsWith("gpt-5");
+    }
+
+    private static String safeLower(String s) {
+        return s == null ? "" : s.toLowerCase();
     }
 }
