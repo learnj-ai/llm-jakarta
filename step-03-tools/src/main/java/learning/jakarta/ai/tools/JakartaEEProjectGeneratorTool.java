@@ -116,7 +116,20 @@ public class JakartaEEProjectGeneratorTool {
             return e.getMessage();
         } catch (Exception e) {
             log.error("Error generating Jakarta EE project", e);
-            return "Error generating Jakarta EE project: " + e.getMessage();
+            // Provide helpful error message and fallback suggestion
+            String errorMsg = "Error generating Jakarta EE project: " + e.getMessage();
+            
+            // Add helpful suggestions based on common issues
+            if (e.getMessage() != null) {
+                if (e.getMessage().contains("NoSuchElementException") || e.getMessage().contains("Maven")) {
+                    errorMsg += "\n\nThis might be due to Maven configuration issues. You can try:\n" +
+                              "1. Using the Jakarta EE Starter online at https://start.jakarta.ee/\n" +
+                              "2. Or manually create a project with: mvn archetype:generate -DgroupId=" + groupId + 
+                              " -DartifactId=" + artifactId + " -DarchetypeArtifactId=jakarta-starter";
+                }
+            }
+            
+            return errorMsg;
         }
     }
 
