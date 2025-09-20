@@ -16,7 +16,7 @@ public class MavenUtility {
 
     public static void invokeMavenArchetype(String archetypeGroupId, String archetypeArtifactId,
             String archetypeVersion, Properties properties, File workingDirectory) {
-        
+
         // Ensure working directory exists
         if (!workingDirectory.exists() && !workingDirectory.mkdirs()) {
             throw new RuntimeException("Failed to create working directory: " + workingDirectory.getAbsolutePath());
@@ -26,6 +26,11 @@ public class MavenUtility {
         System.setProperty(MavenCli.MULTIMODULE_PROJECT_DIRECTORY, workingDirectory.getAbsolutePath());
         System.setProperty("maven.repo.local", System.getProperty("user.home") + "/.m2/repository");
         System.setProperty("maven.home", System.getProperty("maven.home", System.getProperty("user.home") + "/.m2"));
+
+        // Fix for NoSuchElementException in embedded Maven
+        // Set the context class loader to ensure Maven's components are properly loaded
+        ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(MavenCli.class.getClassLoader());
         
         // Disable Maven transfer progress to reduce log noise
         System.setProperty("org.slf4j.simpleLogger.showDateTime", "true");
@@ -57,20 +62,20 @@ public class MavenUtility {
         
         try (PrintStream outStream = new PrintStream(baosOut);
              PrintStream errStream = new PrintStream(baosErr)) {
-            
+
             log.info("Executing Maven command with options: {}", options);
-            
+
             MavenCli cli = new MavenCli();
             int result = cli.doMain(
-                options.toArray(new String[0]), 
+                options.toArray(new String[0]),
                 workingDirectory.getAbsolutePath(),
-                outStream, 
+                outStream,
                 errStream
             );
 
             String output = baosOut.toString();
             String error = baosErr.toString();
-            
+
             log.debug("Maven output: {}", output);
             if (!error.isEmpty()) {
                 log.warn("Maven errors: {}", error);
@@ -79,22 +84,28 @@ public class MavenUtility {
             if (result != 0) {
                 StringBuilder mavenCommand = new StringBuilder("mvn");
                 options.forEach(o -> mavenCommand.append(" ").append(o));
-                
+
                 throw new RuntimeException(String.format(
-                    "Failed to invoke Maven Archetype command: %s. Exit code: %d. Error: %s", 
+                    "Failed to invoke Maven Archetype command: %s. Exit code: %d. Error: %s",
                     mavenCommand.toString(), result, error
                 ));
             }
-            
+
             log.info("Maven archetype generation completed successfully");
-            
+
         } catch (Exception e) {
             log.error("Error during Maven execution", e);
-            throw new RuntimeException("Failed to execute Maven archetype generation", e);
+
+            // Build the Maven command for error message
+            StringBuilder mavenCommand = new StringBuilder("mvn");
+            options.forEach(o -> mavenCommand.append(" ").append(o));
+
+            throw new RuntimeException("Failed to invoke Maven Archetype command: " + mavenCommand.toString(), e);
         } finally {
-            // Restore original streams
+            // Restore original streams and class loader
             System.setOut(originalOut);
             System.setErr(originalErr);
+            Thread.currentThread().setContextClassLoader(originalClassLoader);
         }
     }
 }
