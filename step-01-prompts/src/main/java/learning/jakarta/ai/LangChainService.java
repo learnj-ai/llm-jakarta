@@ -1,6 +1,7 @@
 package learning.jakarta.ai;
 
 import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.model.output.Response;
 import dev.langchain4j.service.AiServices;
@@ -99,7 +100,7 @@ public class LangChainService {
 
         personality.getUserText(message)
                 .onPartialResponse(consumer)
-                .onCompleteResponse((Response<AiMessage> response) -> consumer.accept("[END]"))
+                .onCompleteResponse(chatResponse -> consumer.accept("[END]"))
                 .onError((Throwable throwable) -> {
                     log.error("Error processing message", throwable);
                     consumer.accept("Sorry, I am unable to process your message at this time. Please try again later.");

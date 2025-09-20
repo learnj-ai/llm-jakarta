@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//Users/bazlur/projects/llm-jakarta/step-02-chat-memory/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

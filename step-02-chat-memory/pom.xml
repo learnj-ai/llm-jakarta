@@ -3,9 +3,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>learning.jakarta.ai</groupId>
+    <parent>
+        <groupId>learning.jakarta.ai</groupId>
+        <artifactId>llm-jakarta</artifactId>
+        <version>0.1-SNAPSHOT</version>
+    </parent>
     <artifactId>llm-jakarta-step-02</artifactId>
-    <version>0.1-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <name>llm-jakarta-step-02</name>
@@ -48,13 +51,11 @@
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-open-ai</artifactId>
-            <version>0.36.2</version>
         </dependency>
 
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j</artifactId>
-            <version>0.36.2</version>
         </dependency>
 
         <dependency>
