@@ -15,12 +15,21 @@
         </encoder>
     </appender>
 
+    <!-- Logger for LangChain4j -->
+    <logger name="dev.langchain4j" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+
+    <!-- Logger for your application -->
+    <logger name="learning.jakarta.ai" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </logger>
+
     <!-- Root Logger -->
-    <root level="debug">
+    <root level="INFO">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
     </root>
-
-    <!-- Logger for specific package -->
-    <logger name="dev.langchain4j" level="debug" additivity="false"/>
 </configuration>
