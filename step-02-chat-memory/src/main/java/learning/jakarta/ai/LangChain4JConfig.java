@@ -1,6 +1,7 @@
 package learning.jakarta.ai;
 
 import java.time.Duration;
+import java.util.Arrays;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -54,8 +55,7 @@ public class LangChain4JConfig {
     private int maxMemorySize;
 
     public java.util.List<String> getAllowedModelsList() {
-        return java.util.Arrays.asList(allowedModels.split(","))
-                .stream()
+        return Arrays.stream(allowedModels.split(","))
                 .map(String::trim)
                 .toList();
     }
