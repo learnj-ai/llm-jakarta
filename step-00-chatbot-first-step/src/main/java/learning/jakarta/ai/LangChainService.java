@@ -21,7 +21,18 @@ public class LangChainService {
 
     public void sendMessage(String message, Consumer<String> consumer) {
         log.info("User message: {}", message);
-        consumer.accept(chatModel.chat(message));
+        try {
+            String response = chatModel.chat(message);
+            if (response != null) {
+                consumer.accept(response);
+            } else {
+                log.error("Received null response from chat model for message: {}", message);
+                consumer.accept("Error: No response from model");
+            }
+        } catch (Exception e) {
+            log.error("Error calling chat model: ", e);
+            consumer.accept("Error: " + e.getMessage());
+        }
     }
 
     public synchronized void updateConfiguration(LangChain4JConfig config) {
@@ -44,9 +55,11 @@ public class LangChainService {
         if (supportsFrequencyPenalty(model)) {
             builder.frequencyPenalty(config.getFrequencyPenalty());
         }
+        if (supportsTopP(model)) {
+            builder.topP(config.getTopP());
+        }
 
         return builder
-                .topP(config.getTopP())
                 .timeout(config.getTimeout())
                 .maxCompletionTokens(config.getMaxCompletionToken())
                 .logRequests(config.isLogRequests())
@@ -55,11 +68,15 @@ public class LangChainService {
     }
 
     private static boolean supportsTemperature(String model) {
-        return !(isO1(model) || isGpt5(model));
+        return !isO1(model) && !isGpt5(model);
     }
 
     private static boolean supportsFrequencyPenalty(String model) {
-        return !isGpt5(model);
+        return !isO1(model) && !isGpt5(model);
+    }
+
+    private static boolean supportsTopP(String model) {
+        return !isO1(model) ;
     }
 
     private static boolean isO1(String model) {
