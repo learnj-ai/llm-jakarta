@@ -44,5 +44,9 @@ public class LangChain4JConfig {
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.max-memory-size")
     private int maxMemorySize;
+
+    @Inject
+    @ConfigProperty(name = "github.token")
+    private String githubToken;
 }
 
