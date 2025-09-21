@@ -191,6 +191,11 @@
                 <version>${rest-assured.version}</version>
                 <scope>test</scope>
             </dependency>
+            <dependency>
+                <groupId>dev.langchain4j</groupId>
+                <artifactId>langchain4j-pgvector</artifactId>
+                <version>${langchain4j.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

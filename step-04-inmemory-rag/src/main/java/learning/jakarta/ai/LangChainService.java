@@ -47,11 +47,18 @@ public class LangChainService {
                 .logResponses(config.isLogResponses())
                 .build();
 
+        // Configure content retriever with reasonable limits to avoid token overflow
+        var contentRetriever = EmbeddingStoreContentRetriever.builder()
+                .embeddingStore(embeddingStore)
+                .maxResults(5) // Limit to top 5 most relevant segments
+                .minScore(0.7) // Only include segments with good relevance score
+                .build();
+
         jakartaEEAgent = AiServices
                 .builder(JakartaEEAgent.class)
                 .streamingChatModel(chatModel)
                 .chatMemory(MessageWindowChatMemory.builder().maxMessages(config.getMaxMemorySize()).build())
-                .contentRetriever(EmbeddingStoreContentRetriever.from(embeddingStore))
+                .contentRetriever(contentRetriever)
                 .build();
     }
 

@@ -3,9 +3,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>learning.jakarta.ai</groupId>
+    <parent>
+        <groupId>learning.jakarta.ai</groupId>
+        <artifactId>llm-jakarta</artifactId>
+        <version>0.1-SNAPSHOT</version>
+    </parent>
     <artifactId>llm-jakarta-step-05</artifactId>
-    <version>0.1-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <name>llm-jakarta-step-05</name>
@@ -15,120 +18,93 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.report.sourceEncoding>UTF-8</project.report.sourceEncoding>
-        <maven.compiler.release>17</maven.compiler.release>
-        <jakartaee-api.version>10.0.0</jakartaee-api.version>
-        <wildfly.version>33.0.2.Final</wildfly.version>
-        <compiler-plugin.version>3.13.0</compiler-plugin.version>
-        <war-plugin.version>3.4.0</war-plugin.version>
-        <payara.version>6.2024.11</payara.version>
-        <cargo.version>1.10.15</cargo.version>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.release>21</maven.compiler.release>
+        <!-- Additional properties specific to this module -->
         <apache-tika.version>2.9.1</apache-tika.version>
-        <wildfly.version>33.0.2.Final</wildfly.version>
-        <wildfly-plugin.version>5.0.1.Final</wildfly-plugin.version>
+        <commons-io.version>2.17.0</commons-io.version>
+        <pgvector.version>0.1.6</pgvector.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-api</artifactId>
-            <version>${jakartaee-api.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>jakarta.faces</groupId>
-            <artifactId>jakarta.faces-api</artifactId>
-            <version>4.0.0</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.eclipse.microprofile.config</groupId>
             <artifactId>microprofile-config-api</artifactId>
-            <version>3.1</version>
+            <scope>provided</scope>
         </dependency>
 
+        <!-- LangChain4j Core -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-open-ai</artifactId>
-            <version>0.36.2</version>
         </dependency>
 
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j</artifactId>
-            <version>0.36.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-stdlib</artifactId>
-            <version>2.0.10</version>
         </dependency>
 
-        <!-- Logback Classic -->
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.5.12</version>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.36</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-embedder</artifactId>
-            <version>3.9.4</version>
-        </dependency>
-
-        <!-- Dependencies for Embedded Maven -->
-        <dependency>
-            <groupId>org.apache.maven.resolver</groupId>
-            <artifactId>maven-resolver-connector-basic</artifactId>
-            <version>1.9.16</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven.resolver</groupId>
-            <artifactId>maven-resolver-transport-http</artifactId>
-            <version>1.9.16</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-compat</artifactId>
-            <version>3.9.4</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-            <version>1.18.1</version>
-        </dependency>
-
-        <dependency>
-            <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-pgvector</artifactId>
-            <version>0.36.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-embeddings-all-minilm-l6-v2</artifactId>
-            <version>0.36.1</version>
-        </dependency>
+        <!-- Document Parser for RAG (aligns to parent-managed ${langchain4j.version}) -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-document-parser-apache-tika</artifactId>
-            <version>0.36.2</version>
+            <version>1.5.0-beta11</version>
+        </dependency>
+
+        <!-- Logback for application logging -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
         </dependency>
 
         <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- PgVector for PostgreSQL Vector Storage (use parent-managed version) -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-pgvector</artifactId>
+            <version>1.5.0-beta11</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.pgvector</groupId>
+            <artifactId>pgvector</artifactId>
+            <version>${pgvector.version}</version>
+        </dependency>
+
+        <!-- Embeddings Model -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-embeddings-all-minilm-l6-v2</artifactId>
+        </dependency>
+
+        <!-- Document Parser for RAG -->
+<!--        <dependency>-->
+<!--            <groupId>dev.langchain4j</groupId>-->
+<!--            <artifactId>tika-core</artifactId>-->
+<!--            <version>${apache-tika.version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.apache.tika</groupId>-->
+<!--            <artifactId>tika-parsers-standard-package</artifactId>-->
+<!--            <version>${apache-tika.version}</version>-->
+<!--        </dependency>-->
+
+        <!-- Utilities -->
+        <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.17.0</version>
+            <version>${commons-io.version}</version>
         </dependency>
     </dependencies>
 
@@ -138,11 +114,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>${compiler-plugin.version}</version>
             </plugin>
             <plugin>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>${war-plugin.version}</version>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
                 </configuration>
@@ -152,9 +126,8 @@
             <plugin>
                 <groupId>org.wildfly.plugins</groupId>
                 <artifactId>wildfly-maven-plugin</artifactId>
-                <version>${wildfly-plugin.version}</version>
                 <configuration>
-                    <version>${wildfly.version}</version>
+                    <!-- Inherit WildFly version from parent -->
                     <server-config>standalone.xml</server-config>
                     <scripts>
                         <script>scripts/configure-postgresql.cli</script>
