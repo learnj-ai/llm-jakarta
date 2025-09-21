@@ -40,28 +40,35 @@ public class IllustrationAgent {
 
     public ImagePrompt createImagePrompt(String sceneDescription,
                                        String characterDescription,
+                                       String dialogText,
                                        int pageNumber) {
         var prompt = """
             Children's book illustration in %s style.
 
             Scene: %s
 
-            Characters: %s
+            Main Character (MUST maintain exact same appearance): %s
 
-            Visual requirements:
-            - Child-friendly and cheerful
+            Dialog text to include at bottom: "%s"
+
+            CRITICAL REQUIREMENTS:
+            - Keep the EXACT same character appearance as described above in every detail
+            - Same face shape, eye color, hair style, clothing, body proportions
+            - Include the dialog text clearly readable at the bottom of the illustration
+            - Text should be in a clean, child-friendly font
+            - Text background should be semi-transparent or white for readability
+            - Child-friendly and cheerful scene
             - Bright, warm colors
-            - No text or words in the image
             - Safe for children ages 2-8
             - High quality digital art
-            - Consistent character appearance
             - Professional children's book illustration quality
 
-            Style: %s children's book illustration, professional quality
+            Style: %s children's book illustration with dialog text, professional quality
             """.formatted(
                 style,
                 sceneDescription,
                 characterDescription,
+                dialogText,
                 style
             );
 

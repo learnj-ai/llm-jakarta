@@ -75,18 +75,30 @@ public class BookCreationOrchestrator {
             3. Educational element
             4. Interactive suggestion
 
-            Format the response as:
+            Format the response EXACTLY as follows (no deviation):
             TITLE: [book title]
-            MAIN_CHARACTER: [character description]
+            MAIN_CHARACTER: [Detailed physical description including: age, gender, hair color/style, eye color, skin tone, height, clothing style, distinctive features - BE VERY SPECIFIC for consistency]
             SETTING: [setting description]
 
             PAGE_1:
-            TEXT: [page text]
-            ILLUSTRATION: [detailed description]
+            TEXT: [Actual story dialog/narration for the page - make it engaging and specific to the story]
+            ILLUSTRATION: [detailed scene description]
             EDUCATIONAL: [educational element]
             INTERACTIVE: [interactive suggestion]
 
-            [Continue for all pages...]
+            PAGE_2:
+            TEXT: [Actual story dialog/narration for the page - make it engaging and specific to the story]
+            ILLUSTRATION: [detailed scene description]
+            EDUCATIONAL: [educational element]
+            INTERACTIVE: [interactive suggestion]
+
+            PAGE_3:
+            TEXT: [Actual story dialog/narration for the page - make it engaging and specific to the story]
+            ILLUSTRATION: [detailed scene description]
+            EDUCATIONAL: [educational element]
+            INTERACTIVE: [interactive suggestion]
+
+            CRITICAL: Write actual story content for each page TEXT field, not placeholders. Each page should advance the story with specific dialog or narration.
             """)
         String createRawBookOutline(@V("topic") String topic,
                                    @V("targetAge") String targetAge,
@@ -158,15 +170,15 @@ public class BookCreationOrchestrator {
                         currentEducational, currentInteractive);
         }
 
-        // Ensure we have the expected number of pages
+        // If we don't have enough pages, create meaningful content
         while (pages.size() < expectedPageCount) {
             var pageNum = pages.size() + 1;
             pages.add(PageOutline.builder()
                 .pageNumber(pageNum)
-                .text("Continue the adventure...")
-                .illustrationDescription("Scene showing the story continuation")
-                .educationalElement("Continued learning")
-                .interactiveElement("Ask questions about what happens next")
+                .text("\"Our adventure continues with new discoveries!\"")
+                .illustrationDescription("The main character exploring a new scene with wonder and excitement")
+                .educationalElement("Discovery and exploration")
+                .interactiveElement("What do you think happens next?")
                 .build());
         }
 

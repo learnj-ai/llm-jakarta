@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.Callable;
 
 @Command(name = "book-creator",
@@ -39,8 +41,7 @@ public class BookCreationCLI implements Callable<Integer> {
     private String educationalGoals;
 
     @Option(names = {"-o", "--output"},
-            description = "Output PDF file path",
-            defaultValue = "generated-book.pdf")
+            description = "Output PDF file path (auto-generated if not specified)")
     private String outputPath;
 
     @Option(names = {"-s", "--style"},
@@ -104,8 +105,9 @@ public class BookCreationCLI implements Callable<Integer> {
             // Execute workflow with progress updates
             var book = workflow.executeWithProgress(request);
 
-            // Save PDF using modern Path API
-            var outputFile = Paths.get(outputPath);
+            // Generate unique filename if not specified
+            var finalOutputPath = outputPath != null ? outputPath : generateUniqueFileName(topic, book.getTitle());
+            var outputFile = Paths.get(finalOutputPath);
             Files.write(outputFile, book.getPdfContent());
 
             printSuccess(outputFile, book);
@@ -158,6 +160,21 @@ public class BookCreationCLI implements Callable<Integer> {
             """.formatted(outputFile, book.getTitle(), book.getPages().size(), fileSize);
 
         System.out.println(summary);
+    }
+
+    private String generateUniqueFileName(String topic, String bookTitle) {
+        // Clean the topic/title for filename
+        var cleanName = (bookTitle != null && !bookTitle.equals("A Wonderful Story")) ? bookTitle : topic;
+        cleanName = cleanName.toLowerCase()
+            .replaceAll("[^a-z0-9\\s-]", "")
+            .replaceAll("\\s+", "-")
+            .replaceAll("-+", "-")
+            .replaceAll("^-|-$", "");
+
+        // Add timestamp for uniqueness
+        var timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
+
+        return String.format("%s-%s.pdf", cleanName, timestamp);
     }
 
     public static void main(String[] args) {

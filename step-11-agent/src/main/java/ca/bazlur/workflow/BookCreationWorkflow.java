@@ -16,6 +16,7 @@ public class BookCreationWorkflow {
     private final BookCreationOrchestrator orchestrator;
     private final IllustrationAgent illustrationAgent;
     private final ContentRefinementAgent refinementAgent;
+    private final CharacterDesignAgent characterDesignAgent;
     private final PDFGenerationAgent pdfAgent;
     private final BookCreationConfig config;
     private final boolean verbose;
@@ -25,6 +26,7 @@ public class BookCreationWorkflow {
         this.orchestrator = new BookCreationOrchestrator(apiKey, config);
         this.illustrationAgent = new IllustrationAgent(apiKey, "watercolor");
         this.refinementAgent = new ContentRefinementAgent(apiKey, config);
+        this.characterDesignAgent = new CharacterDesignAgent(apiKey, config);
         this.pdfAgent = new PDFGenerationAgent();
         this.verbose = verbose;
     }
@@ -34,15 +36,31 @@ public class BookCreationWorkflow {
         var pages = new ArrayList<BookPage>();
 
         try {
-            // Step 1: Generate book outline
-            printStep(1, "Generating story outline");
+            // Step 1: Generate detailed character design
+            printStep(1, "Creating detailed character design");
+            var detailedCharacter = characterDesignAgent.generateCharacterDescription(
+                request.getTopic(),
+                request.getTargetAge(),
+                "main character"
+            );
+            System.out.println("  ✓ Character design: " +
+                (detailedCharacter.length() > 100 ?
+                    detailedCharacter.substring(0, 100) + "..." :
+                    detailedCharacter));
+
+            // Step 2: Generate book outline
+            printStep(2, "Generating story outline");
             var outline = orchestrator.generateOutline(request);
             System.out.println("  ✓ Title: " + outline.getTitle());
             System.out.println("  ✓ Main character: " + outline.getMainCharacter());
             System.out.println("  ✓ Setting: " + outline.getSetting());
 
-            // Step 2: Refine content for each page
-            printStep(2, "Refining content for " + request.getPageCount() + " pages");
+            // Use the detailed character design for illustrations
+            var finalCharacterDescription = detailedCharacter.isEmpty() ?
+                outline.getMainCharacter() : detailedCharacter;
+
+            // Step 3: Refine content for each page
+            printStep(3, "Refining content for " + request.getPageCount() + " pages");
             var refinementTasks = new ArrayList<CompletableFuture<BookPage>>();
 
             try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
@@ -56,7 +74,7 @@ public class BookCreationWorkflow {
                                 var preview = pageOutline.getText().length() > 50 ?
                                     pageOutline.getText().substring(0, 50) + "..." :
                                     pageOutline.getText();
-                                System.out.println("  📄 Page " + (pageIndex + 1) + ": " + preview);
+                                System.out.println("  📄 Page " + (pageIndex + 1) + " original: " + preview);
                             }
 
                             // Refine text for age appropriateness
@@ -64,6 +82,13 @@ public class BookCreationWorkflow {
                                 pageOutline.getText(),
                                 request.getTargetAge()
                             );
+
+                            if (verbose) {
+                                var refinedPreview = refinedText.length() > 50 ?
+                                    refinedText.substring(0, 50) + "..." :
+                                    refinedText;
+                                System.out.println("  📝 Page " + (pageIndex + 1) + " refined: " + refinedPreview);
+                            }
 
                             return BookPage.builder()
                                 .pageNumber(pageIndex + 1)
@@ -91,16 +116,16 @@ public class BookCreationWorkflow {
                 }
             }
 
-            // Step 3: Generate illustrations (unless dry run)
+            // Step 4: Generate illustrations (unless dry run)
             if (!request.isDryRun()) {
-                printStep(3, "Generating illustrations");
-                generateIllustrations(pages, outline.getMainCharacter());
+                printStep(4, "Generating illustrations with dialog text");
+                generateIllustrations(pages, finalCharacterDescription);
             } else {
-                printStep(3, "Skipping image generation (dry run mode)");
+                printStep(4, "Skipping image generation (dry run mode)");
             }
 
-            // Step 4: Generate PDF
-            printStep(4, "Creating PDF");
+            // Step 5: Generate PDF
+            printStep(5, "Creating PDF");
             var book = CompleteBook.builder()
                 .title(outline.getTitle())
                 .author("Generated by AI Book Creator")
@@ -131,9 +156,17 @@ public class BookCreationWorkflow {
     private void generateIllustrations(List<BookPage> pages, String mainCharacter) {
         for (var page : pages) {
             try {
+                // Clean and format the dialog text for display
+                var dialogText = cleanDialogText(page.getText());
+
+                if (verbose) {
+                    System.out.println("  🎭 Dialog for page " + page.getPageNumber() + ": \"" + dialogText + "\"");
+                }
+
                 var prompt = illustrationAgent.createImagePrompt(
                     page.getIllustrationDescription(),
                     mainCharacter,
+                    dialogText,
                     page.getPageNumber()
                 );
 
@@ -149,6 +182,32 @@ public class BookCreationWorkflow {
                 // Continue without image for this page
             }
         }
+    }
+
+    private String cleanDialogText(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return "Let's continue our adventure!";
+        }
+
+        // Remove extra whitespace and limit length for readability on image
+        var cleaned = text.trim().replaceAll("\\s+", " ");
+
+        // Limit to about 60 characters for good readability on illustration
+        if (cleaned.length() > 60) {
+            var words = cleaned.split(" ");
+            var result = new StringBuilder();
+            for (var word : words) {
+                if (result.length() + word.length() + 1 <= 60) {
+                    if (result.length() > 0) result.append(" ");
+                    result.append(word);
+                } else {
+                    break;
+                }
+            }
+            cleaned = result.toString() + "...";
+        }
+
+        return cleaned;
     }
 
     private BookPage createFallbackPage(PageOutline pageOutline, int pageNumber) {
