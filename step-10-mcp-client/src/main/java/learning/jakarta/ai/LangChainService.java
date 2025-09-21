@@ -43,14 +43,27 @@ public class LangChainService {
 
 	private ChatModel buildChatModel(LangChain4JConfig currentConfig) {
 		log.debug("Building OpenAI Chat Model with config: {}", currentConfig);
-		return OpenAiChatModel.builder()
+		
+		var builder = OpenAiChatModel.builder()
 				.apiKey(currentConfig.getApiKey())
-				.modelName(currentConfig.getModelName())
-				.temperature(currentConfig.getTemperature())
-				.topP(currentConfig.getTopP())
+				.modelName(currentConfig.getModelName());
+
+		String model = safeLower(currentConfig.getModelName());
+
+		// Controls that some model families don't accept
+		if (supportsTemperature(model)) {
+			builder.temperature(currentConfig.getTemperature());
+		}
+		if (supportsFrequencyPenalty(model)) {
+			builder.frequencyPenalty(currentConfig.getFrequencyPenalty());
+		}
+		if (supportsTopP(model)) {
+			builder.topP(currentConfig.getTopP());
+		}
+
+		return builder
 				.timeout(currentConfig.getTimeout())
-				.maxTokens(currentConfig.getMaxTokens())
-				.frequencyPenalty(currentConfig.getFrequencyPenalty())
+				.maxCompletionTokens(currentConfig.getMaxCompletionToken())
 				.logRequests(currentConfig.isLogRequests())
 				.logResponses(currentConfig.isLogResponses())
 				.build();
@@ -113,5 +126,29 @@ public class LangChainService {
 		this.assistant = buildAssistant(this.chatModel, this.toolProvider);
 
 		log.info("Configuration updated successfully. New model and assistant are active.");
+	}
+
+	private static boolean supportsTemperature(String model) {
+		return !isO1(model) && !isGpt5(model);
+	}
+
+	private static boolean supportsFrequencyPenalty(String model) {
+		return !isO1(model) && !isGpt5(model);
+	}
+
+	private static boolean supportsTopP(String model) {
+		return !isO1(model);
+	}
+
+	private static boolean isO1(String model) {
+		return model.startsWith("o1-") || model.equals("o1");
+	}
+
+	private static boolean isGpt5(String model) {
+		return model.startsWith("gpt-5");
+	}
+
+	private static String safeLower(String s) {
+		return s == null ? "" : s.toLowerCase();
 	}
 }

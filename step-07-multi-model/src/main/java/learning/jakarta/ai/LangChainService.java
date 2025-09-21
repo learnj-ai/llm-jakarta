@@ -1,8 +1,7 @@
 package learning.jakarta.ai;
 
-import dev.langchain4j.data.message.AiMessage;
-import dev.langchain4j.model.chat.StreamingChatLanguageModel;
-import dev.langchain4j.model.output.Response;
+
+import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.service.AiServices;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -14,6 +13,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Map;
 import java.util.function.Consumer;
 
 @Slf4j
@@ -25,7 +25,7 @@ public class LangChainService {
     private Personality personality = null;
     @Getter
     private PersonalityType personalityType;
-    private StreamingChatLanguageModel chatModel;
+    private StreamingChatModel chatModel;
     @Getter
     private ModelType currentModel;
 
@@ -35,7 +35,6 @@ public class LangChainService {
     @Inject
     LangChain4JConfig config;
 
-    @Inject
     @PostConstruct
     public void init() {
         currentModel = ModelType.fromModelName(config.getModelName());
@@ -66,9 +65,9 @@ public class LangChainService {
         };
     }
 
-    private <T extends Personality> T createPersonality(Class<T> clazz, StreamingChatLanguageModel chatModel) {
+    private <T extends Personality> T createPersonality(Class<T> clazz, StreamingChatModel chatModel) {
         return AiServices.builder(clazz)
-                .streamingChatLanguageModel(chatModel)
+                .streamingChatModel(chatModel)
                 .build();
     }
 
@@ -76,25 +75,36 @@ public class LangChainService {
         log.info("User message: {}", message);
 
         personality.getUserText(message)
-                .onNext(consumer::accept)
-                .onComplete((Response<AiMessage> response) -> consumer.accept("[END]"))
+                .onPartialResponse(consumer::accept)
+                .onCompleteResponse((response) -> consumer.accept("[END]"))
                 .onError((Throwable throwable) -> {
                     log.error("Error processing message", throwable);
                     consumer.accept("Sorry, I am unable to process your message at this time. Please try again later.");
                 }).start();
     }
 
-    public String getPersonalitySystemPrompt() {
-        if (personality == null) {
-            return JavaChampion.SYSTEM_PROMPT; // Default prompt
-        }
-        return switch (personality) {
-            case JavaChampion ignored -> JavaChampion.SYSTEM_PROMPT;
-            case Poet ignored -> Poet.SYSTEM_PROMPT;
-            case ChainOfThought ignored -> ChainOfThought.SYSTEM_PROMPT;
-            case MovieSummarizer ignored -> MovieSummarizer.SYSTEM_PROMPT;
-            case TreeOfThought ignored -> TreeOfThought.SYSTEM_PROMPT;
-            default -> JavaChampion.SYSTEM_PROMPT;
-        };
+    private static final String DEFAULT_SYSTEM_PROMPT = JavaChampion.SYSTEM_PROMPT;
+
+    private static final Map<Class<? extends Personality>, String> SYSTEM_PROMPTS = Map.of(
+            JavaChampion.class, JavaChampion.SYSTEM_PROMPT,
+            Poet.class, Poet.SYSTEM_PROMPT,
+            ChainOfThought.class, ChainOfThought.SYSTEM_PROMPT,
+            MovieSummarizer.class, MovieSummarizer.SYSTEM_PROMPT,
+            TreeOfThought.class, TreeOfThought.SYSTEM_PROMPT
+    );
+
+    private static String resolveSystemPrompt(Personality p) {
+        if (p == null) return DEFAULT_SYSTEM_PROMPT;
+        return SYSTEM_PROMPTS.keySet()
+                .stream()
+                .filter(k -> k.isInstance(p))
+                .findFirst()
+                .map(SYSTEM_PROMPTS::get)
+                .orElse(DEFAULT_SYSTEM_PROMPT);
     }
+
+    public String getPersonalitySystemPrompt() {
+        return resolveSystemPrompt(personality);
+    }
+
 }

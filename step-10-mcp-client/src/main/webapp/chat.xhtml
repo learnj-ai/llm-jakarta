@@ -276,8 +276,8 @@ Feel free to ask any questions!`;
             </div>
 
             <div class="form-group">
-                <h:outputLabel for="main-maxTokens" value="Max Tokens:"/>
-                <h:inputText id="main-maxTokens" value="#{configurationBean.maxTokens}" 
+                <h:outputLabel for="main-maxCompletionToken" value="Max Completion Tokens:"/>
+                <h:inputText id="main-maxCompletionToken" value="#{configurationBean.maxCompletionToken}" 
                            required="true" styleClass="config-input">
                     <f:convertNumber integerOnly="true"/>
                 </h:inputText>

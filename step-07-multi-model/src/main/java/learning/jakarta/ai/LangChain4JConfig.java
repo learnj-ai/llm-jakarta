@@ -1,6 +1,7 @@
 package learning.jakarta.ai;
 
 import java.time.Duration;
+import java.util.Arrays;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -30,7 +31,15 @@ public class LangChain4JConfig {
 
     @Inject
     @ConfigProperty(name = "langchain4j.chat-model.max-tokens")
-    private int maxTokens;
+    private int maxCompletionToken;
+
+    @Inject
+    @ConfigProperty(name = "langchain4j.chat-model.top-p")
+    private double topP;
+
+    @Inject
+    @ConfigProperty(name = "langchain4j.chat-model.allowed-models")
+    private String allowedModels;
 
     @Inject
     @ConfigProperty(name = "langchain4j.chat-model.frequency-penalty")
@@ -48,4 +57,9 @@ public class LangChain4JConfig {
     @ConfigProperty(name = "langchain4j.personality-type")
     private PersonalityType personalityType;
 
+    public java.util.List<String> getAllowedModelsList() {
+        return Arrays.stream(allowedModels.split(","))
+                .map(String::trim)
+                .toList();
+    }
 }

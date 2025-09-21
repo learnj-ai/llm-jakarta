@@ -5,9 +5,14 @@ import lombok.Getter;
 @Getter
 public enum ModelType {
     // OpenAI Models
+    GPT_5("gpt-5", "GPT-5", Provider.OPENAI),
+    GPT_5_MINI("gpt-5-mini", "GPT-5 Mini", Provider.OPENAI),
+    GPT_5_NANO("gpt-5-nano", "GPT-5 Nano", Provider.OPENAI),
     GPT_4o("gpt-4o", "GPT-40", Provider.OPENAI),
     GPT_4("gpt-4", "GPT-4", Provider.OPENAI),
     GPT_3_5_TURBO("gpt-3.5-turbo", "GPT-3.5 Turbo", Provider.OPENAI),
+    O1_PREVIEW("o1-preview", "O1 Preview", Provider.OPENAI),
+    O1_MINI("o1-mini", "O1 Mini", Provider.OPENAI),
     
     // Anthropic Models
     CLAUDE_3_OPUS("claude-3-opus-latest", "Claude-3 Opus", Provider.ANTHROPIC),
@@ -45,6 +50,6 @@ public enum ModelType {
                 return type;
             }
         }
-        return GPT_3_5_TURBO; // default model
+        return GPT_5; // default model
     }
 }

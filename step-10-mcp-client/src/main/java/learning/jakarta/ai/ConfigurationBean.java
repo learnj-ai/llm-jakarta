@@ -24,7 +24,7 @@ public class ConfigurationBean {
     private String modelName;
     private Double temperature;
     private Double topP;
-    private Integer maxTokens;
+    private Integer maxCompletionToken;
     private Double frequencyPenalty;
     private boolean logRequests;
     private boolean logResponses;
@@ -34,7 +34,7 @@ public class ConfigurationBean {
         this.modelName = config.getModelName();
         this.temperature = config.getTemperature();
         this.topP = config.getTopP();
-        this.maxTokens = config.getMaxTokens();
+        this.maxCompletionToken = config.getMaxCompletionToken();
         this.frequencyPenalty = config.getFrequencyPenalty();
         this.logRequests = config.isLogRequests();
         this.logResponses = config.isLogResponses();
@@ -53,7 +53,7 @@ public class ConfigurationBean {
         config.setModelName(modelName);
         config.setTemperature(temperature);
         config.setTopP(topP);
-        config.setMaxTokens(maxTokens);
+        config.setMaxCompletionToken(maxCompletionToken);
         config.setFrequencyPenalty(frequencyPenalty);
         config.setLogRequests(logRequests);
         config.setLogResponses(logResponses);

@@ -7,7 +7,6 @@ import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 // Removed unused AllMiniLmL6V2EmbeddingModel import
 import dev.langchain4j.model.openai.OpenAiChatModel;
-// Removed unused OpenAiStreamingChatModel import
 import dev.langchain4j.rag.DefaultRetrievalAugmentor;
 import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
@@ -54,7 +53,7 @@ public class LangChainService {
                     .modelName(config.getGoogleChatModelName())
                     .temperature(2.0)
                     .timeout(config.getTimeout())
-                    .maxTokens(config.getMaxTokens())
+                    .maxCompletionTokens(config.getMaxCompletionToken())
                     .logRequests(config.isLogRequests())
                     .logResponses(config.isLogResponses())
                     .baseUrl(config.getGoogleBaseUrl())
@@ -70,16 +69,30 @@ public class LangChainService {
     }
 
     private void configureChatService(LangChain4JConfig config, BookStoreService bookStoreService, EmbeddingModel embeddingModel, EmbeddingStore<TextSegment> embeddingStore) {
-        var chatModel = OpenAiChatModel.builder()
+        OpenAiChatModel.OpenAiChatModelBuilder builder = OpenAiChatModel.builder()
                 .apiKey(config.getApiKey())
-                .modelName(config.getModelName())
-                .temperature(config.getTemperature())
+                .modelName(config.getModelName());
+
+        String model = safeLower(config.getModelName());
+
+        // Controls that some model families don't accept
+        if (supportsTemperature(model)) {
+            builder.temperature(config.getTemperature());
+        }
+        if (supportsFrequencyPenalty(model)) {
+            builder.frequencyPenalty(config.getFrequencyPenalty());
+        }
+        if (supportsTopP(model)) {
+            builder.topP(config.getTopP());
+        }
+
+        var chatModel = builder
                 .timeout(config.getTimeout())
-                .maxTokens(config.getMaxTokens())
-                .frequencyPenalty(config.getFrequencyPenalty())
+                .maxCompletionTokens(config.getMaxCompletionToken())
                 .logRequests(config.isLogRequests())
                 .logResponses(config.isLogResponses())
                 .build();
+
         inMemoryChatMemoryStore = new InMemoryChatMemoryStore();
 
         ChatMemoryProvider chatMemoryProvider = memoryId -> MessageWindowChatMemory.builder()
@@ -151,6 +164,31 @@ public class LangChainService {
             return true;
         }
     }
+
+    private static boolean supportsTemperature(String model) {
+        return !isO1(model) && !isGpt5(model);
+    }
+
+    private static boolean supportsFrequencyPenalty(String model) {
+        return !isO1(model) && !isGpt5(model);
+    }
+
+    private static boolean supportsTopP(String model) {
+        return !isO1(model);
+    }
+
+    private static boolean isO1(String model) {
+        return model.startsWith("o1-") || model.equals("o1");
+    }
+
+    private static boolean isGpt5(String model) {
+        return model.startsWith("gpt-5");
+    }
+
+    private static String safeLower(String s) {
+        return s == null ? "" : s.toLowerCase();
+    }
+
     // purple llama
     // code shield
     // List of words are included in the response, either remove them or this question is not ethical

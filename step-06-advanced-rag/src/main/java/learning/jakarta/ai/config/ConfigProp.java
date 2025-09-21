@@ -1,6 +1,7 @@
 package learning.jakarta.ai.config;
 
 import java.time.Duration;
+import java.util.Arrays;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -24,12 +25,21 @@ public class ConfigProp {
     private double temperature;
 
     @Inject
+    @ConfigProperty(name = "langchain4j.open-ai.chat-model.top-p")
+    private double topP;
+
+    @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.timeout")
     private Duration timeout;
 
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.max-tokens")
-    private int maxTokens;
+    private int maxCompletionTokens;
+
+    @Inject
+    @ConfigProperty(name = "langchain4j.open-ai.chat-model.allowed-models")
+    private String allowedModels;
+
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.frequency-penalty")
     private double frequencyPenalty;
@@ -56,5 +66,11 @@ public class ConfigProp {
     @Inject
     @ConfigProperty(name = "llm-jakarta.max-overlap-size.token")
     private int maxOverlapSizeInTokens;
+
+    public java.util.List<String> getAllowedModelsList() {
+        return Arrays.stream(allowedModels.split(","))
+                .map(String::trim)
+                .toList();
+    }
 }
 
