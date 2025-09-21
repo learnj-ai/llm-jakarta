@@ -93,7 +93,7 @@ public class LangChainService {
 
         academicResearchAssistant.chat(message)
                 .onPartialResponse(consumer::accept)
-                .onCompleteResponse((Response<AiMessage> response) -> consumer.accept("[END]"))
+                .onCompleteResponse(( response) -> consumer.accept("[END]"))
                 .onError((Throwable throwable) -> {
                     log.error("Error processing message", throwable);
                     consumer.accept("Sorry, I am unable to process your message at this time. Please try again later.");

@@ -2,7 +2,7 @@ package learning.jakarta.ai.chat;
 
 import dev.langchain4j.model.anthropic.AnthropicStreamingChatModel;
 
-import dev.langchain4j.model.chat.StreamingChatModel;
+
 import dev.langchain4j.model.mistralai.MistralAiStreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -20,7 +20,7 @@ public class ChatModelFactory {
     @Inject
     private AIConfigFactory configFactory;
 
-    public StreamingChatModel createChatModel(ModelType modelType) {
+    public Object createChatModel(ModelType modelType) {
         AIProviderConfig config = configFactory.getConfig(modelType.getProvider());
 
         return switch (modelType.getProvider()) {
@@ -81,7 +81,7 @@ public class ChatModelFactory {
                         .modelName(modelType.getModelName())
                         .temperature(anthropicConfig.getTemperature())
                         .timeout(anthropicConfig.getTimeout())
-                        .maxTokens(anthropicConfig.getMaxCompletionToken())
+                        .maxCompletionTokens(anthropicConfig.getMaxCompletionToken())
                         .logRequests(anthropicConfig.isLogRequests())
                         .logResponses(anthropicConfig.isLogResponses())
                         .build();
@@ -95,7 +95,7 @@ public class ChatModelFactory {
                         .modelName(modelType.getModelName())
                         .temperature(mistralConfig.getTemperature())
                         .timeout(mistralConfig.getTimeout())
-                        .maxTokens(mistralConfig.getMaxCompletionToken())
+                        .maxCompletionTokens(mistralConfig.getMaxCompletionToken())
                         .safePrompt(true)
                         .logRequests(mistralConfig.isLogRequests())
                         .logResponses(mistralConfig.isLogResponses())
@@ -107,7 +107,7 @@ public class ChatModelFactory {
     /**
      * Helper method to build models using the OpenAI-compatible builder.
      */
-    private StreamingChatModel buildOpenAiModel(String apiKey,
+    private Object buildOpenAiModel(String apiKey,
                                                         String baseUrl,
                                                         String modelName,
                                                         double temperature,
