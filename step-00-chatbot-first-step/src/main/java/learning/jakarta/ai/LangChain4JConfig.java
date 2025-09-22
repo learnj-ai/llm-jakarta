@@ -43,10 +43,12 @@ public class LangChain4JConfig {
 
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.max-tokens")
-    private int maxTokens;
+    private int maxCompletionToken;
+
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.frequency-penalty")
     private double frequencyPenalty;
+
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.log-requests")
     private boolean logRequests;

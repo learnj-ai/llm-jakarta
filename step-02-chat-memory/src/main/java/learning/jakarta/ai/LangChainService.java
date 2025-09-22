@@ -30,11 +30,22 @@ public class LangChainService {
 
         var chatModel = OpenAiStreamingChatModel.builder()
                 .apiKey(config.getApiKey())
-                .modelName(config.getModelName())
-                .temperature(config.getTemperature())
+                .modelName(config.getModelName());
+
+        String model = safeLower(config.getModelName());
+
+        // Controls that some model families don't accept
+        if (supportsTemperature(model)) {
+            chatModel.temperature(config.getTemperature());
+        }
+        if (supportsFrequencyPenalty(model)) {
+            chatModel.frequencyPenalty(config.getFrequencyPenalty());
+        }
+
+        var streamingChatModel = chatModel
+                .topP(config.getTopP())
                 .timeout(config.getTimeout())
-                .maxTokens(config.getMaxTokens())
-                .frequencyPenalty(config.getFrequencyPenalty())
+                .maxCompletionTokens(config.getMaxCompletionToken())
                 .logRequests(config.isLogRequests())
                 .logResponses(config.isLogResponses())
                 .build();
@@ -47,7 +58,7 @@ public class LangChainService {
 
         javaAgent = AiServices
                 .builder(JavaAgent.class)
-                .streamingChatLanguageModel(chatModel)
+                .streamingChatModel(streamingChatModel)
                 .chatMemoryProvider(chatMemoryProvider)
                 .build();
     }
@@ -60,8 +71,8 @@ public class LangChainService {
         }
 
         javaAgent.chat(userId, message)
-                .onNext(consumer::accept)
-                .onComplete((Response<AiMessage> response) -> consumer.accept("[END]"))
+                .onPartialResponse(consumer::accept)
+                .onCompleteResponse((response) -> consumer.accept("[END]"))
                 .onError((Throwable throwable) -> {
                     log.error("Error processing message", throwable);
                     consumer.accept("Sorry, I am unable to process your message at this time. Please try again later.");
@@ -143,6 +154,26 @@ public class LangChainService {
         );
 
         chatMemoryStore.updateMessages(userId, fewShotExamples);
+    }
+
+    private static boolean supportsTemperature(String model) {
+        return !(isO1(model) || isGpt5(model));
+    }
+
+    private static boolean supportsFrequencyPenalty(String model) {
+        return !isGpt5(model);
+    }
+
+    private static boolean isO1(String model) {
+        return model.startsWith("o1-") || model.equals("o1");
+    }
+
+    private static boolean isGpt5(String model) {
+        return model.startsWith("gpt-5");
+    }
+
+    private static String safeLower(String s) {
+        return s == null ? "" : s.toLowerCase();
     }
 }
 

@@ -1,7 +1,8 @@
 package learning.jakarta.ai.chat;
 
 import dev.langchain4j.model.anthropic.AnthropicStreamingChatModel;
-import dev.langchain4j.model.chat.StreamingChatLanguageModel;
+
+
 import dev.langchain4j.model.mistralai.MistralAiStreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -19,7 +20,7 @@ public class ChatModelFactory {
     @Inject
     private AIConfigFactory configFactory;
 
-    public StreamingChatLanguageModel createChatModel(ModelType modelType) {
+    public Object createChatModel(ModelType modelType) {
         AIProviderConfig config = configFactory.getConfig(modelType.getProvider());
 
         return switch (modelType.getProvider()) {
@@ -31,7 +32,8 @@ public class ChatModelFactory {
                         modelType.getModelName(),
                         openAiConfig.getTemperature(),
                         openAiConfig.getTimeout(),
-                        openAiConfig.getMaxTokens(),
+                        openAiConfig.getMaxCompletionToken(),
+                        openAiConfig.getTopP(),
                         openAiConfig.getFrequencyPenalty(),
                         openAiConfig.isLogRequests(),
                         openAiConfig.isLogResponses(),
@@ -47,7 +49,8 @@ public class ChatModelFactory {
                         modelType.getModelName(),
                         googleConfig.getTemperature(),
                         googleConfig.getTimeout(),
-                        googleConfig.getMaxTokens(),
+                        googleConfig.getMaxCompletionToken(),
+                        googleConfig.getTopP(),
                         null, // frequencyPenalty not supported by Google endpoint
                         googleConfig.isLogRequests(),
                         googleConfig.isLogResponses(),
@@ -62,7 +65,8 @@ public class ChatModelFactory {
                         modelType.getModelName(),
                         olamaConfig.getTemperature(),
                         olamaConfig.getTimeout(),
-                        olamaConfig.getMaxTokens(),
+                        olamaConfig.getMaxCompletionToken(),
+                        olamaConfig.getTopP(),
                         olamaConfig.getFrequencyPenalty(),
                         olamaConfig.isLogRequests(),
                         olamaConfig.isLogResponses(),
@@ -77,7 +81,7 @@ public class ChatModelFactory {
                         .modelName(modelType.getModelName())
                         .temperature(anthropicConfig.getTemperature())
                         .timeout(anthropicConfig.getTimeout())
-                        .maxTokens(anthropicConfig.getMaxTokens())
+                        .maxCompletionTokens(anthropicConfig.getMaxCompletionToken())
                         .logRequests(anthropicConfig.isLogRequests())
                         .logResponses(anthropicConfig.isLogResponses())
                         .build();
@@ -91,7 +95,7 @@ public class ChatModelFactory {
                         .modelName(modelType.getModelName())
                         .temperature(mistralConfig.getTemperature())
                         .timeout(mistralConfig.getTimeout())
-                        .maxTokens(mistralConfig.getMaxTokens())
+                        .maxCompletionTokens(mistralConfig.getMaxCompletionToken())
                         .safePrompt(true)
                         .logRequests(mistralConfig.isLogRequests())
                         .logResponses(mistralConfig.isLogResponses())
@@ -103,35 +107,69 @@ public class ChatModelFactory {
     /**
      * Helper method to build models using the OpenAI-compatible builder.
      */
-    private StreamingChatLanguageModel buildOpenAiModel(String apiKey,
+    private Object buildOpenAiModel(String apiKey,
                                                         String baseUrl,
                                                         String modelName,
                                                         double temperature,
                                                         Duration timeout,
-                                                        int maxTokens,
+                                                        int maxCompletionTokens,
+                                                        double topP,
                                                         Double frequencyPenalty,
                                                         boolean logRequests,
                                                         boolean logResponses,
                                                         String organizationId) {
 
+        String model = safeLower(modelName);
+        
         var builder = OpenAiStreamingChatModel.builder()
                 .apiKey(apiKey)
                 .modelName(modelName)
-                .temperature(temperature)
                 .timeout(timeout)
-                .maxTokens(maxTokens)
+                .maxCompletionTokens(maxCompletionTokens)
                 .logRequests(logRequests)
                 .logResponses(logResponses);
 
+        // Controls that some model families don't accept
+        if (supportsTemperature(model)) {
+            builder.temperature(temperature);
+        }
+        if (supportsFrequencyPenalty(model) && frequencyPenalty != null) {
+            builder.frequencyPenalty(frequencyPenalty);
+        }
+        if (supportsTopP(model)) {
+            builder.topP(topP);
+        }
+
         if (baseUrl != null && !baseUrl.isEmpty()) {
             builder.baseUrl(baseUrl);
-        }
-        if (frequencyPenalty != null) {
-            builder.frequencyPenalty(frequencyPenalty);
         }
         if (organizationId != null && !organizationId.isEmpty()) {
             builder.organizationId(organizationId);
         }
         return builder.build();
+    }
+
+    private static boolean supportsTemperature(String model) {
+        return !isO1(model) && !isGpt5(model);
+    }
+
+    private static boolean supportsFrequencyPenalty(String model) {
+        return !isO1(model) && !isGpt5(model);
+    }
+
+    private static boolean supportsTopP(String model) {
+        return !isO1(model);
+    }
+
+    private static boolean isO1(String model) {
+        return model.startsWith("o1-") || model.equals("o1");
+    }
+
+    private static boolean isGpt5(String model) {
+        return model.startsWith("gpt-5");
+    }
+
+    private static String safeLower(String s) {
+        return s == null ? "" : s.toLowerCase();
     }
 }

@@ -4,6 +4,7 @@ import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import learning.jakarta.ai.util.InputNormalizer;
 import learning.jakarta.ai.util.MavenUtility;
+import learning.jakarta.ai.util.MavenProcessUtility;
 import learning.jakarta.ai.util.VersionInfo;
 import learning.jakarta.ai.util.ZipUtility;
 import lombok.extern.slf4j.Slf4j;
@@ -116,7 +117,20 @@ public class JakartaEEProjectGeneratorTool {
             return e.getMessage();
         } catch (Exception e) {
             log.error("Error generating Jakarta EE project", e);
-            return "Error generating Jakarta EE project: " + e.getMessage();
+            // Provide helpful error message and fallback suggestion
+            String errorMsg = "Error generating Jakarta EE project: " + e.getMessage();
+            
+            // Add helpful suggestions based on common issues
+            if (e.getMessage() != null) {
+                if (e.getMessage().contains("NoSuchElementException") || e.getMessage().contains("Maven")) {
+                    errorMsg += "\n\nThis might be due to Maven configuration issues. You can try:\n" +
+                              "1. Using the Jakarta EE Starter online at https://start.jakarta.ee/\n" +
+                              "2. Or manually create a project with: mvn archetype:generate -DgroupId=" + groupId + 
+                              " -DartifactId=" + artifactId + " -DarchetypeArtifactId=jakarta-starter";
+                }
+            }
+            
+            return errorMsg;
         }
     }
 
@@ -186,14 +200,25 @@ public class JakartaEEProjectGeneratorTool {
                 properties.put("artifactId", artifactId);
                 properties.put("package", groupId);
 
-                // Invoke Maven archetype
-                MavenUtility.invokeMavenArchetype(
-                        "org.eclipse.starter",
-                        "jakarta-starter",
-                        VersionInfo.ARCHETYPE_VERSION,
-                        properties,
-                        workingDirectory
-                );
+                // Try process-based Maven first, fall back to embedded if needed
+                try {
+                    MavenProcessUtility.invokeMavenArchetype(
+                            "org.eclipse.starter",
+                            "jakarta-starter",
+                            VersionInfo.ARCHETYPE_VERSION,
+                            properties,
+                            workingDirectory
+                    );
+                } catch (Exception e) {
+                    log.warn("Process-based Maven failed, trying embedded Maven: {}", e.getMessage());
+                    MavenUtility.invokeMavenArchetype(
+                            "org.eclipse.starter",
+                            "jakarta-starter",
+                            VersionInfo.ARCHETYPE_VERSION,
+                            properties,
+                            workingDirectory
+                    );
+                }
 
                 // Zip the resulting directory
                 File directory = new File(workingDirectory, artifactId);

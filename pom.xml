@@ -1,3 +1,4 @@
+
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -46,7 +47,9 @@
         <wildfly.version>35.0.1.Final</wildfly.version>
 
         <!-- LangChain4j -->
-        <langchain4j.version>1.0.0-beta3</langchain4j.version>
+        <langchain4j.version>1.4.0</langchain4j.version>
+        <langchain4j.embedding.all.minilm.version>${langchain4j-document-parser-apache-tika.version}</langchain4j.embedding.all.minilm.version>
+        <langchain4j.mcp.version>${langchain4j-document-parser-apache-tika.version}</langchain4j.mcp.version>
 
         <!-- Logging -->
         <logback.version>1.5.12</logback.version>
@@ -72,6 +75,8 @@
         <surefire-plugin.version>3.5.2</surefire-plugin.version>
         <failsafe-plugin.version>3.5.2</failsafe-plugin.version>
         <dependency-check-plugin.version>9.0.9</dependency-check-plugin.version>
+        <langchain4j-document-parser-apache-tika.version>1.5.0-beta11</langchain4j-document-parser-apache-tika.version>
+        <langchain4j-pgvector.version>1.5.0-beta11</langchain4j-pgvector.version>
     </properties>
 
     <dependencyManagement>
@@ -118,12 +123,17 @@
             <dependency>
                 <groupId>dev.langchain4j</groupId>
                 <artifactId>langchain4j-mcp</artifactId>
-                <version>${langchain4j.version}</version>
+                <version>${langchain4j.mcp.version}</version>
             </dependency>
             <dependency>
                 <groupId>dev.langchain4j</groupId>
                 <artifactId>langchain4j-embeddings-all-minilm-l6-v2</artifactId>
-                <version>${langchain4j.version}</version>
+                <version>${langchain4j.embedding.all.minilm.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.langchain4j</groupId>
+                <artifactId>langchain4j-document-parser-apache-tika</artifactId>
+                <version>${langchain4j-document-parser-apache-tika.version}</version>
             </dependency>
             <dependency>
                 <groupId>dev.langchain4j</groupId>
@@ -187,6 +197,11 @@
                 <artifactId>rest-assured</artifactId>
                 <version>${rest-assured.version}</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>dev.langchain4j</groupId>
+                <artifactId>langchain4j-pgvector</artifactId>
+                <version>${langchain4j-pgvector.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

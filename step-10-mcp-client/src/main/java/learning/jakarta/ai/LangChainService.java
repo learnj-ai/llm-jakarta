@@ -1,11 +1,12 @@
 package learning.jakarta.ai;
 
+
 import dev.langchain4j.mcp.McpToolProvider;
 import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.stdio.StdioMcpTransport;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.service.AiServices;
 import jakarta.annotation.PostConstruct;
@@ -22,7 +23,7 @@ import java.util.function.Consumer;
 public class LangChainService {
 
 	private LangChain4JConfig config;
-	private ChatLanguageModel chatModel;
+	private ChatModel chatModel;
 	private Assistant assistant;
 	private McpToolProvider toolProvider;
 
@@ -40,16 +41,29 @@ public class LangChainService {
 		log.info("LangChainService initialized successfully.");
 	}
 
-	private ChatLanguageModel buildChatModel(LangChain4JConfig currentConfig) {
+	private ChatModel buildChatModel(LangChain4JConfig currentConfig) {
 		log.debug("Building OpenAI Chat Model with config: {}", currentConfig);
-		return OpenAiChatModel.builder()
+		
+		var builder = OpenAiChatModel.builder()
 				.apiKey(currentConfig.getApiKey())
-				.modelName(currentConfig.getModelName())
-				.temperature(currentConfig.getTemperature())
-				.topP(currentConfig.getTopP())
+				.modelName(currentConfig.getModelName());
+
+		String model = safeLower(currentConfig.getModelName());
+
+		// Controls that some model families don't accept
+		if (supportsTemperature(model)) {
+			builder.temperature(currentConfig.getTemperature());
+		}
+		if (supportsFrequencyPenalty(model)) {
+			builder.frequencyPenalty(currentConfig.getFrequencyPenalty());
+		}
+		if (supportsTopP(model)) {
+			builder.topP(currentConfig.getTopP());
+		}
+
+		return builder
 				.timeout(currentConfig.getTimeout())
-				.maxTokens(currentConfig.getMaxTokens())
-				.frequencyPenalty(currentConfig.getFrequencyPenalty())
+				.maxCompletionTokens(currentConfig.getMaxCompletionToken())
 				.logRequests(currentConfig.isLogRequests())
 				.logResponses(currentConfig.isLogResponses())
 				.build();
@@ -91,10 +105,10 @@ public class LangChainService {
 				.build();
 	}
 
-	private Assistant buildAssistant(ChatLanguageModel model, McpToolProvider provider) {
+	private Assistant buildAssistant(ChatModel model, McpToolProvider provider) {
 		log.debug("Building AI Assistant.");
 		return AiServices.builder(Assistant.class)
-				.chatLanguageModel(model)
+				.chatModel(model)
 				.toolProvider(provider)
 				.chatMemory(MessageWindowChatMemory.withMaxMessages(20))
 				.build();
@@ -112,5 +126,29 @@ public class LangChainService {
 		this.assistant = buildAssistant(this.chatModel, this.toolProvider);
 
 		log.info("Configuration updated successfully. New model and assistant are active.");
+	}
+
+	private static boolean supportsTemperature(String model) {
+		return !isO1(model) && !isGpt5(model);
+	}
+
+	private static boolean supportsFrequencyPenalty(String model) {
+		return !isO1(model) && !isGpt5(model);
+	}
+
+	private static boolean supportsTopP(String model) {
+		return !isO1(model);
+	}
+
+	private static boolean isO1(String model) {
+		return model.startsWith("o1-") || model.equals("o1");
+	}
+
+	private static boolean isGpt5(String model) {
+		return model.startsWith("gpt-5");
+	}
+
+	private static String safeLower(String s) {
+		return s == null ? "" : s.toLowerCase();
 	}
 }

@@ -17,19 +17,19 @@ public class LangChain4JConfig {
     @ConfigProperty(name = "langchain4j.open-ai.api-key")
     private String apiKey;
 
-    // Inject directly as List<String> - MicroProfile Config handles comma separation
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.allowed-models")
-    private List<String> allowedModelsList;
+    private String allowedModels;
 
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.model-name")
     private String modelName;
 
-    // Removed the manual splitting method as injection handles it now
-    // public List<String> getAllowedModelsList() {
-    //     return Arrays.asList(allowedModels.split(","));
-    // }
+    public java.util.List<String> getAllowedModelsList() {
+        return Arrays.stream(allowedModels.split(","))
+                .map(String::trim)
+                .toList();
+    }
 
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.temperature")
@@ -45,7 +45,7 @@ public class LangChain4JConfig {
 
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.max-tokens")
-    private int maxTokens;
+    private int maxCompletionToken;
 
     @Inject
     @ConfigProperty(name = "langchain4j.open-ai.chat-model.frequency-penalty")

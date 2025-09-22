@@ -1,5 +1,6 @@
 package learning.jakarta.ai;
 
+import learning.jakarta.ai.tools.GitHubTool;
 import learning.jakarta.ai.tools.JakartaEEProjectGeneratorTool;
 import learning.jakarta.ai.tools.JavaCompilerTool;
 import learning.jakarta.ai.tools.WebPageTool;
@@ -23,21 +24,34 @@ public class LangChainService {
 
     @Inject
     public LangChainService(LangChain4JConfig config) {
-        var chatModel = OpenAiStreamingChatModel.builder()
+        OpenAiStreamingChatModel.OpenAiStreamingChatModelBuilder builder = OpenAiStreamingChatModel.builder()
                 .apiKey(config.getApiKey())
-                .modelName(config.getModelName())
-                .temperature(config.getTemperature())
+                .modelName(config.getModelName());
+
+        String model = safeLower(config.getModelName());
+
+        // Controls that some model families don't accept
+        if (supportsTemperature(model)) {
+            builder.temperature(config.getTemperature());
+        }
+        if (supportsFrequencyPenalty(model)) {
+            builder.frequencyPenalty(config.getFrequencyPenalty());
+        }
+        if (supportsTopP(model)) {
+            builder.topP(config.getTopP());
+        }
+
+        var chatModel = builder
                 .timeout(config.getTimeout())
-                .maxTokens(config.getMaxTokens())
-                .frequencyPenalty(config.getFrequencyPenalty())
+                .maxCompletionTokens(config.getMaxCompletionToken())
                 .logRequests(config.isLogRequests())
                 .logResponses(config.isLogResponses())
                 .build();
 
         jakartaEEAgent = AiServices
                 .builder(JakartaEEAgent.class)
-                .streamingChatLanguageModel(chatModel)
-                .tools(new JakartaEEProjectGeneratorTool(), new WebPageTool(), new JavaCompilerTool())
+                .streamingChatModel(chatModel)
+                .tools(new JakartaEEProjectGeneratorTool(), new WebPageTool(), new JavaCompilerTool(), new GitHubTool(config.getGithubToken()))
                 .chatMemory(MessageWindowChatMemory.builder().maxMessages(config.getMaxMemorySize()).build())
                 .build();
     }
@@ -46,11 +60,35 @@ public class LangChainService {
         log.info("User {} message: {}", userId, message);
 
         jakartaEEAgent.chat(message)
-                .onNext(consumer::accept)
-                .onComplete((Response<AiMessage> response) -> consumer.accept("[END]"))
+                .onPartialResponse(consumer::accept)
+                .onCompleteResponse(chatResponse -> consumer.accept("[END]"))
                 .onError((Throwable throwable) -> {
                     log.error("Error processing message", throwable);
                     consumer.accept("Sorry, I am unable to process your message at this time. Please try again later.");
                 }).start();
+    }
+
+    private static boolean supportsTemperature(String model) {
+        return !isO1(model) && !isGpt5(model);
+    }
+
+    private static boolean supportsFrequencyPenalty(String model) {
+        return !isO1(model) && !isGpt5(model);
+    }
+
+    private static boolean supportsTopP(String model) {
+        return !isO1(model);
+    }
+
+    private static boolean isO1(String model) {
+        return model.startsWith("o1-") || model.equals("o1");
+    }
+
+    private static boolean isGpt5(String model) {
+        return model.startsWith("gpt-5");
+    }
+
+    private static String safeLower(String s) {
+        return s == null ? "" : s.toLowerCase();
     }
 }
