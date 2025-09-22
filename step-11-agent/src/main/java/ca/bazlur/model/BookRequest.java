@@ -12,4 +12,6 @@ public class BookRequest {
     private String educationalGoals;
     private String illustrationStyle;
     private boolean dryRun;
+    @Builder.Default
+    private boolean parallelGeneration = true;
 }

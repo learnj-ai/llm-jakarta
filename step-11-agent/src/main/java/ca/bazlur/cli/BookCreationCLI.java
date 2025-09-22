@@ -71,6 +71,11 @@ public class BookCreationCLI implements Callable<Integer> {
             defaultValue = "0.7")
     private double temperature;
 
+    @Option(names = {"--parallel"},
+            description = "Enable parallel image generation (faster but uses more API quota)",
+            defaultValue = "true")
+    private boolean parallelGeneration;
+
     @Override
     public Integer call() throws Exception {
         // Get API key from environment if not provided
@@ -100,6 +105,7 @@ public class BookCreationCLI implements Callable<Integer> {
                 .educationalGoals(educationalGoals)
                 .illustrationStyle(illustrationStyle)
                 .dryRun(dryRun)
+                .parallelGeneration(parallelGeneration)
                 .build();
 
             // Execute workflow with progress updates

@@ -8,8 +8,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BookCreationWorkflow {
 
@@ -118,8 +121,14 @@ public class BookCreationWorkflow {
 
             // Step 4: Generate illustrations (unless dry run)
             if (!request.isDryRun()) {
-                printStep(4, "Generating illustrations with dialog text");
-                generateIllustrations(pages, finalCharacterDescription);
+                var generationMode = request.isParallelGeneration() ? "parallel mode 🚀" : "sequential mode";
+                printStep(4, "Generating illustrations with dialog text (" + generationMode + ")");
+
+                if (request.isParallelGeneration()) {
+                    generateIllustrationsParallel(pages, finalCharacterDescription);
+                } else {
+                    generateIllustrationsSequential(pages, finalCharacterDescription);
+                }
             } else {
                 printStep(4, "Skipping image generation (dry run mode)");
             }
@@ -153,14 +162,96 @@ public class BookCreationWorkflow {
         }
     }
 
-    private void generateIllustrations(List<BookPage> pages, String mainCharacter) {
+    private void generateIllustrationsParallel(List<BookPage> pages, String mainCharacter) {
+        var totalPages = pages.size();
+        var completedPages = new java.util.concurrent.atomic.AtomicInteger(0);
+        var failedPages = new java.util.concurrent.CopyOnWriteArrayList<Integer>();
+
+        // Create a semaphore for rate limiting (max 3 concurrent requests)
+        var rateLimiter = new java.util.concurrent.Semaphore(3);
+
+        // Use virtual threads for parallel execution
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            var imageTasks = pages.stream()
+                .map(page -> CompletableFuture.supplyAsync(() -> {
+                    try {
+                        // Acquire permit for rate limiting
+                        rateLimiter.acquire();
+
+                        // Clean and format the dialog text for display
+                        var dialogText = cleanDialogText(page.getText());
+
+                        if (verbose) {
+                            System.out.println("  🎭 Starting page " + page.getPageNumber() +
+                                " dialog: \"" + dialogText + "\"");
+                        }
+
+                        var prompt = illustrationAgent.createImagePrompt(
+                            page.getIllustrationDescription(),
+                            mainCharacter,
+                            dialogText,
+                            page.getPageNumber()
+                        );
+
+                        var startTime = System.currentTimeMillis();
+                        var image = illustrationAgent.generateImage(prompt);
+                        page.setImageBase64(image.base64Data());
+
+                        var elapsed = System.currentTimeMillis() - startTime;
+                        var completed = completedPages.incrementAndGet();
+
+                        System.out.println("  ✅ Page " + page.getPageNumber() +
+                            " illustration complete (" + completed + "/" + totalPages +
+                            ") - " + (elapsed/1000.0) + "s");
+
+                        return page;
+
+                    } catch (Exception e) {
+                        failedPages.add(page.getPageNumber());
+                        System.err.println("  ❌ Failed page " + page.getPageNumber() +
+                            ": " + e.getMessage());
+                        return page;
+                    } finally {
+                        // Release permit after a short delay for rate limiting
+                        executor.submit(() -> {
+                            try {
+                                Thread.sleep(1000); // 1 second between API calls
+                                rateLimiter.release();
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                            }
+                        });
+                    }
+                }, executor))
+                .toList();
+
+            // Wait for all tasks to complete
+            var allTasks = CompletableFuture.allOf(imageTasks.toArray(new CompletableFuture[0]));
+
+            try {
+                allTasks.orTimeout(3, TimeUnit.MINUTES).join();
+            } catch (Exception e) {
+                System.err.println("  ⚠️  Some illustrations may have timed out");
+            }
+
+            // Report results
+            if (!failedPages.isEmpty()) {
+                System.out.println("  ⚠️  Failed to generate images for pages: " + failedPages);
+            }
+        }
+    }
+
+    private void generateIllustrationsSequential(List<BookPage> pages, String mainCharacter) {
+        var totalPages = pages.size();
+        var completed = 0;
+
         for (var page : pages) {
             try {
                 // Clean and format the dialog text for display
                 var dialogText = cleanDialogText(page.getText());
 
                 if (verbose) {
-                    System.out.println("  🎭 Dialog for page " + page.getPageNumber() + ": \"" + dialogText + "\"");
+                    System.out.println("  🎭 Page " + page.getPageNumber() + " dialog: \"" + dialogText + "\"");
                 }
 
                 var prompt = illustrationAgent.createImagePrompt(
@@ -170,14 +261,24 @@ public class BookCreationWorkflow {
                     page.getPageNumber()
                 );
 
+                var startTime = System.currentTimeMillis();
                 var image = illustrationAgent.generateImage(prompt);
                 page.setImageBase64(image.base64Data());
 
+                var elapsed = System.currentTimeMillis() - startTime;
+                completed++;
+
+                System.out.println("  ✅ Page " + page.getPageNumber() +
+                    " illustration complete (" + completed + "/" + totalPages +
+                    ") - " + (elapsed/1000.0) + "s");
+
                 // Rate limiting to respect API limits
-                Thread.sleep(2000);
+                if (completed < totalPages) {
+                    Thread.sleep(2000); // 2 seconds between requests
+                }
 
             } catch (Exception e) {
-                System.err.println("  ⚠️  Failed to generate image for page " +
+                System.err.println("  ❌ Failed to generate image for page " +
                     page.getPageNumber() + ": " + e.getMessage());
                 // Continue without image for this page
             }
